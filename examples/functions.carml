@@ -1,0 +1,31 @@
+let f a: int -> int = a + b;;
+let f: int -> int =
+  fun a: int -> int ->> a + b;;
+
+
+let print_string str: string -> unit = print str;;
+let print_int a: int -> unit = print a;;
+
+let f a b: int -> int -> unit =
+  let c: int = a + b in
+  print_int c;;
+
+let f a b: int -> int -> unit =
+  let c: int = a + b in
+  let d: int = c - a in
+  let e: int = c - b in
+  match d = b && e = a with
+  | true -> print_string "ok"
+  | false -> print_string "error"
+;;
+
+let c: unit = f 1 2;;
+let c: unit = f (1 + 2) 2;;
+
+let y: int = (fun x: int -> int ->> x + 1) 1;;
+
+let map f l: int -> int -> int list -> int list =
+  match l with
+  | h :: t -> (f h) :: (map f t)
+  | [] -> []
+;;

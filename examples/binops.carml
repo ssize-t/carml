@@ -1,0 +1,34 @@
+let a: int = a + b;;
+let a: int = a - b;;
+let a: int = a * b;;
+let a: int = a / b;;
+
+let a: int = a * b / c - d + e;;
+let a: int = a * (b / c - d) + e;;
+
+let a: int = a - b * c / d + e;;
+let a: int = (a - b) * c / (d + e);;
+
+let a: int = a + b * c - d / e;;
+let a: int = (a + b) * (c - d) / e;;
+
+let a: bool = a > b;;
+let a: bool = a >= b;;
+let a: bool = a = b;;
+let a: bool = a < b;;
+let a: bool = a <= b;;
+let a: bool = a && b;;
+let a: bool = a || b;;
+let a: bool = !a;;
+
+let a: bool = a > b || a > c;;
+let a: bool = a > b || a;;
+let a: bool = a > (b || a);;
+
+let a: bool = a > b && a > c;;
+let a: bool = a > b && a;;
+let a: bool = a > (b && a);;
+
+let a: bool = !a > b;;
+let a: bool = !(a > b);;
+let a: bool = !a > b && c < d || e;;

@@ -1,0 +1,78 @@
+let fst t: int * int -> int =
+  match t with
+  | (h, _) -> h
+;;
+
+let snd t: int * int -> int =
+  match t with
+  | (_, t) -> t
+;;
+
+let head l default: int list -> int -> int =
+  match l with
+  | h :: t -> h
+  | [] -> default
+;;
+
+let length l: int list -> int =
+  match l with
+  | _ :: t -> 1 + length t
+  | [] -> 0
+;;
+
+type exp =
+  AddExp of exp * exp |
+  SubExp of exp * exp |
+  Int of int
+;;
+
+let eval e: exp -> int =
+  match e with
+  | Int i -> i
+  | AddExp (e1, e2) -> (
+    let i1: int = eval e1 in
+    let i2: int = eval e2 in
+    i1 + i2
+  )
+  | SubExp (e1, e2) -> (
+    let i1: int = eval e1 in
+    let i2: int = eval e2 in
+    i1 - i2
+  )
+;;
+
+type rec = A of int * bool * float;;
+
+let get_int a: rec -> int =
+  match a with
+  | A (i, _, _) -> i
+;;
+
+let get_bool a: rec -> bool =
+  match a with
+  | A (_, b, _) -> b
+;;
+
+let get_float a: rec -> float =
+  match a with
+  | A (_, _, f) -> f
+;;
+
+let reassemble_rec r: rec -> rec =
+  let i: int = get_int r in
+  let b: bool = get_bool r in
+  let f: float = get_float r in
+  A (i, b, f)
+;;
+
+let test_reassemble r: rec -> bool =
+  let r2: rec = reassemble_rec r in
+  match (r, r2) with
+  | (A(i, b, f), A(i2, b2, f2)) ->
+    i = i2 && b = b2 && f = f2
+;;
+
+let deeply_nested_match t: test -> bool =
+  match t with
+  | ((h :: t, _ :: A (_, b, _) :: _), _) -> b = h
+;;

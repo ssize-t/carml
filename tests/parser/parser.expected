@@ -1,0 +1,580 @@
+========= [../../../../examples/binops.carml] =========
+[(Ast.Let ("a", Ast.TInt, (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b")))
+    ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Sub, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Mult, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Div, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Add,
+        (Ast.NumOp (Ast.Sub,
+           (Ast.NumOp (Ast.Div,
+              (Ast.NumOp (Ast.Mult, (Ast.Var "a"), (Ast.Var "b"))),
+              (Ast.Var "c"))),
+           (Ast.Var "d"))),
+        (Ast.Var "e")))
+     ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Add,
+        (Ast.NumOp (Ast.Mult, (Ast.Var "a"),
+           (Ast.NumOp (Ast.Sub,
+              (Ast.NumOp (Ast.Div, (Ast.Var "b"), (Ast.Var "c"))),
+              (Ast.Var "d")))
+           )),
+        (Ast.Var "e")))
+     ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Add,
+        (Ast.NumOp (Ast.Sub, (Ast.Var "a"),
+           (Ast.NumOp (Ast.Div,
+              (Ast.NumOp (Ast.Mult, (Ast.Var "b"), (Ast.Var "c"))),
+              (Ast.Var "d")))
+           )),
+        (Ast.Var "e")))
+     ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Div,
+        (Ast.NumOp (Ast.Mult,
+           (Ast.NumOp (Ast.Sub, (Ast.Var "a"), (Ast.Var "b"))), (Ast.Var "c")
+           )),
+        (Ast.NumOp (Ast.Add, (Ast.Var "d"), (Ast.Var "e")))))
+     ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Sub,
+        (Ast.NumOp (Ast.Add, (Ast.Var "a"),
+           (Ast.NumOp (Ast.Mult, (Ast.Var "b"), (Ast.Var "c"))))),
+        (Ast.NumOp (Ast.Div, (Ast.Var "d"), (Ast.Var "e")))))
+     ));
+  (Ast.Let ("a", Ast.TInt,
+     (Ast.NumOp (Ast.Div,
+        (Ast.NumOp (Ast.Mult,
+           (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b"))),
+           (Ast.NumOp (Ast.Sub, (Ast.Var "c"), (Ast.Var "d"))))),
+        (Ast.Var "e")))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Gte, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Eq, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Lt, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Lte, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.And, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Or, (Ast.Var "a"), (Ast.Var "b")))));
+  (Ast.Let ("a", Ast.TBool, (Ast.UnOp (Ast.Not, (Ast.Var "a")))));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Or, (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b"))),
+        (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "c")))))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Or, (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b"))),
+        (Ast.Var "a")))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Gt, (Ast.Var "a"),
+        (Ast.BinOp (Ast.Or, (Ast.Var "b"), (Ast.Var "a")))))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.And, (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b"))),
+        (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "c")))))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.And, (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b"))),
+        (Ast.Var "a")))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Gt, (Ast.Var "a"),
+        (Ast.BinOp (Ast.And, (Ast.Var "b"), (Ast.Var "a")))))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Gt, (Ast.UnOp (Ast.Not, (Ast.Var "a"))), (Ast.Var "b")))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.UnOp (Ast.Not, (Ast.BinOp (Ast.Gt, (Ast.Var "a"), (Ast.Var "b")))))
+     ));
+  (Ast.Let ("a", Ast.TBool,
+     (Ast.BinOp (Ast.Or,
+        (Ast.BinOp (Ast.And,
+           (Ast.BinOp (Ast.Gt, (Ast.UnOp (Ast.Not, (Ast.Var "a"))),
+              (Ast.Var "b"))),
+           (Ast.BinOp (Ast.Lt, (Ast.Var "c"), (Ast.Var "d"))))),
+        (Ast.Var "e")))
+     ))
+  ]
+========================
+========= [../../../../examples/compound_literals.carml] =========
+[(Ast.Let ("t", (Ast.TTuple (Ast.TInt, Ast.TInt)),
+    (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t3", (Ast.TTuple (Ast.TInt, (Ast.TTuple (Ast.TInt, Ast.TInt)))),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t2",
+     (Ast.TTuple (Ast.TInt,
+        (Ast.TTuple (Ast.TInt, (Ast.TTuple (Ast.TInt, Ast.TInt)))))),
+     (Ast.C
+        (Ast.Tuple
+           [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 4321));
+             (Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 4321))]))
+     ));
+  (Ast.Let ("t", (Ast.TTuple ((Ast.TTuple (Ast.TInt, Ast.TInt)), Ast.TInt)),
+     (Ast.C
+        (Ast.Tuple
+           [(Ast.C
+               (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]));
+             (Ast.L (Ast.Int 1234))]))
+     ));
+  (Ast.Let ("t2", (Ast.TTuple (Ast.TInt, (Ast.TTuple (Ast.TInt, Ast.TInt)))),
+     (Ast.C
+        (Ast.Tuple
+           [(Ast.C
+               (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]));
+             (Ast.L (Ast.Int 1234))]))
+     ));
+  (Ast.Let ("t3",
+     (Ast.TTuple ((Ast.TTuple (Ast.TInt, Ast.TInt)),
+        (Ast.TTuple (Ast.TInt, Ast.TInt)))),
+     (Ast.C
+        (Ast.Tuple
+           [(Ast.C
+               (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]));
+             (Ast.C
+                (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))
+             ]))
+     ));
+  (Ast.Let ("l", (Ast.TList Ast.TInt),
+     (Ast.C
+        (Ast.List
+           [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234));
+             (Ast.L (Ast.Int 1234))]))
+     ));
+  (Ast.Let ("l2", (Ast.TList Ast.TInt), (Ast.C (Ast.List []))));
+  (Ast.Let ("l3", (Ast.TList (Ast.TList Ast.TInt)),
+     (Ast.C
+        (Ast.List
+           [(Ast.C
+               (Ast.List [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]));
+             (Ast.C (Ast.List [(Ast.L (Ast.Int 5432))]))]))
+     ));
+  (Ast.Let ("m", (Ast.TList (Ast.TTuple (Ast.TInt, Ast.TInt))),
+     (Ast.C
+        (Ast.List
+           [(Ast.C
+               (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]));
+             (Ast.C
+                (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))
+             ]))
+     ));
+  (Ast.Let ("m", (Ast.TList (Ast.TTuple (Ast.TInt, (Ast.TList Ast.TInt)))),
+     (Ast.C
+        (Ast.List
+           [(Ast.C
+               (Ast.Tuple
+                  [(Ast.L (Ast.Int 1234));
+                    (Ast.C
+                       (Ast.List
+                          [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 4321))]))
+                    ]));
+             (Ast.C
+                (Ast.Tuple
+                   [(Ast.L (Ast.Int 1234));
+                     (Ast.C
+                        (Ast.List
+                           [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 4321))]))
+                     ]))
+             ]))
+     ))
+  ]
+========================
+========= [../../../../examples/example_logger.carml] =========
+[(Ast.Type ("log_lvl",
+    [("Debug", None); ("Info", None); ("Warn", None); ("Fatal", None)]));
+  (Ast.Let ("log_lvl_to_int", (Ast.TFun ((Ast.TRecord "log_lvl"), Ast.TInt)),
+     (Ast.Fun (["lvl"], (Ast.TFun ((Ast.TRecord "log_lvl"), Ast.TInt)),
+        (Ast.Match ((Ast.Var "lvl"),
+           [((Ast.MRecord ("Debug", [])), (Ast.L (Ast.Int 0)));
+             ((Ast.MRecord ("Info", [])), (Ast.L (Ast.Int 1)));
+             ((Ast.MRecord ("Warn", [])), (Ast.L (Ast.Int 2)));
+             ((Ast.MRecord ("Fatal", [])), (Ast.L (Ast.Int 3)))]
+           ))
+        ))
+     ));
+  (Ast.Let ("mk_log",
+     (Ast.TFun ((Ast.TRecord "log_lvl"),
+        (Ast.TFun (Ast.TString,
+           (Ast.TFun ((Ast.TRecord "log_lvl"), Ast.TUnit))))
+        )),
+     (Ast.Fun (["lvl"],
+        (Ast.TFun ((Ast.TRecord "log_lvl"),
+           (Ast.TFun (Ast.TString,
+              (Ast.TFun ((Ast.TRecord "log_lvl"), Ast.TUnit))))
+           )),
+        (Ast.LetIn ("l", Ast.TInt,
+           (Ast.App ((Ast.Var "log_lvl_to_int"), [(Ast.Var "l")])),
+           (Ast.Fun (["msg"; "lvl'"],
+              (Ast.TFun (Ast.TString,
+                 (Ast.TFun ((Ast.TRecord "log_lvl"), Ast.TUnit)))),
+              (Ast.LetIn ("l'", Ast.TInt,
+                 (Ast.App ((Ast.Var "log_lvl_to_int"), [(Ast.Var "lvl'")])),
+                 (Ast.Match (
+                    (Ast.BinOp (Ast.Gte, (Ast.Var "l'"), (Ast.Var "l"))),
+                    [((Ast.ML (Ast.Bool true)),
+                      (Ast.App ((Ast.Var "print_string"), [(Ast.Var "msg")])));
+                      (Ast.Blank, (Ast.L Ast.Unit))]
+                    ))
+                 ))
+              ))
+           ))
+        ))
+     ));
+  (Ast.Let ("main", (Ast.TFun (Ast.TUnit, Ast.TUnit)),
+     (Ast.Seq (
+        (Ast.LetIn ("log", (Ast.TRecord "log_lvl"),
+           (Ast.App ((Ast.Var "mk_log"), [(Ast.L (Ast.Int 1))])),
+           (Ast.App ((Ast.Var "log"),
+              [(Ast.L (Ast.String "debug"));
+                (Ast.C (Ast.Record ("Debug", [])))]
+              ))
+           )),
+        (Ast.Seq (
+           (Ast.App ((Ast.Var "log"),
+              [(Ast.L (Ast.String "info")); (Ast.C (Ast.Record ("Info", [])))
+                ]
+              )),
+           (Ast.Seq (
+              (Ast.App ((Ast.Var "log"),
+                 [(Ast.L (Ast.String "warn"));
+                   (Ast.C (Ast.Record ("Warn", [])))]
+                 )),
+              (Ast.Seq (
+                 (Ast.App ((Ast.Var "log"),
+                    [(Ast.L (Ast.String "fatal"));
+                      (Ast.C (Ast.Record ("Fatal", [])))]
+                    )),
+                 (Ast.L Ast.Unit)))
+              ))
+           ))
+        ))
+     ))
+  ]
+========================
+========= [../../../../examples/functions.carml] =========
+[(Ast.Let ("f", (Ast.TFun (Ast.TInt, Ast.TInt)),
+    (Ast.Fun (["a"], (Ast.TFun (Ast.TInt, Ast.TInt)),
+       (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b")))))
+    ));
+  (Ast.Let ("f", (Ast.TFun (Ast.TInt, Ast.TInt)),
+     (Ast.Fun (["a"], (Ast.TFun (Ast.TInt, Ast.TInt)),
+        (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b")))))
+     ));
+  (Ast.Let ("print_string", (Ast.TFun (Ast.TString, Ast.TUnit)),
+     (Ast.Fun (["str"], (Ast.TFun (Ast.TString, Ast.TUnit)),
+        (Ast.App ((Ast.Var "print"), [(Ast.Var "str")]))))
+     ));
+  (Ast.Let ("print_int", (Ast.TFun (Ast.TInt, Ast.TUnit)),
+     (Ast.Fun (["a"], (Ast.TFun (Ast.TInt, Ast.TUnit)),
+        (Ast.App ((Ast.Var "print"), [(Ast.Var "a")]))))
+     ));
+  (Ast.Let ("f", (Ast.TFun (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TUnit)))),
+     (Ast.Fun (["a"; "b"],
+        (Ast.TFun (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TUnit)))),
+        (Ast.LetIn ("c", Ast.TInt,
+           (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b"))),
+           (Ast.App ((Ast.Var "print_int"), [(Ast.Var "c")]))))
+        ))
+     ));
+  (Ast.Let ("f", (Ast.TFun (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TUnit)))),
+     (Ast.Fun (["a"; "b"],
+        (Ast.TFun (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TUnit)))),
+        (Ast.LetIn ("c", Ast.TInt,
+           (Ast.NumOp (Ast.Add, (Ast.Var "a"), (Ast.Var "b"))),
+           (Ast.LetIn ("d", Ast.TInt,
+              (Ast.NumOp (Ast.Sub, (Ast.Var "c"), (Ast.Var "a"))),
+              (Ast.LetIn ("e", Ast.TInt,
+                 (Ast.NumOp (Ast.Sub, (Ast.Var "c"), (Ast.Var "b"))),
+                 (Ast.Match (
+                    (Ast.BinOp (Ast.Eq, (Ast.Var "d"),
+                       (Ast.BinOp (Ast.Eq,
+                          (Ast.BinOp (Ast.And, (Ast.Var "b"), (Ast.Var "e"))),
+                          (Ast.Var "a")))
+                       )),
+                    [((Ast.ML (Ast.Bool true)),
+                      (Ast.App ((Ast.Var "print_string"),
+                         [(Ast.L (Ast.String "ok"))])));
+                      ((Ast.ML (Ast.Bool false)),
+                       (Ast.App ((Ast.Var "print_string"),
+                          [(Ast.L (Ast.String "error"))])))
+                      ]
+                    ))
+                 ))
+              ))
+           ))
+        ))
+     ));
+  (Ast.Let ("c", Ast.TUnit,
+     (Ast.App ((Ast.Var "f"), [(Ast.L (Ast.Int 1)); (Ast.L (Ast.Int 2))]))));
+  (Ast.Let ("c", Ast.TUnit,
+     (Ast.App ((Ast.Var "f"),
+        [(Ast.NumOp (Ast.Add, (Ast.L (Ast.Int 1)), (Ast.L (Ast.Int 2))));
+          (Ast.L (Ast.Int 2))]
+        ))
+     ));
+  (Ast.Let ("y", Ast.TInt,
+     (Ast.App (
+        (Ast.Fun (["x"], (Ast.TFun (Ast.TInt, Ast.TInt)),
+           (Ast.NumOp (Ast.Add, (Ast.Var "x"), (Ast.L (Ast.Int 1)))))),
+        [(Ast.L (Ast.Int 1))]))
+     ));
+  (Ast.Let ("map",
+     (Ast.TFun (Ast.TInt,
+        (Ast.TFun (Ast.TInt,
+           (Ast.TFun ((Ast.TList Ast.TInt), (Ast.TList Ast.TInt)))))
+        )),
+     (Ast.Fun (["f"; "l"],
+        (Ast.TFun (Ast.TInt,
+           (Ast.TFun (Ast.TInt,
+              (Ast.TFun ((Ast.TList Ast.TInt), (Ast.TList Ast.TInt)))))
+           )),
+        (Ast.Match ((Ast.Var "l"),
+           [((Ast.MList [(Ast.MVar "h"); (Ast.MVar "t")]),
+             (Ast.C
+                (Ast.List
+                   [(Ast.App ((Ast.Var "f"), [(Ast.Var "h")]));
+                     (Ast.App ((Ast.Var "map"),
+                        [(Ast.Var "f"); (Ast.Var "t")]))
+                     ])));
+             ((Ast.MList []), (Ast.C (Ast.List [])))]
+           ))
+        ))
+     ))
+  ]
+========================
+========= [../../../../examples/pattern_matching.carml] =========
+[(Ast.Let ("fst", (Ast.TTuple (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TInt)))),
+    (Ast.Fun (["t"],
+       (Ast.TTuple (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TInt)))),
+       (Ast.Match ((Ast.Var "t"),
+          [((Ast.MTuple [(Ast.MVar "h"); Ast.Blank]), (Ast.Var "h"))]))
+       ))
+    ));
+  (Ast.Let ("snd", (Ast.TTuple (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TInt)))),
+     (Ast.Fun (["t"],
+        (Ast.TTuple (Ast.TInt, (Ast.TFun (Ast.TInt, Ast.TInt)))),
+        (Ast.Match ((Ast.Var "t"),
+           [((Ast.MTuple [Ast.Blank; (Ast.MVar "t")]), (Ast.Var "t"))]))
+        ))
+     ));
+  (Ast.Let ("head",
+     (Ast.TFun ((Ast.TList Ast.TInt), (Ast.TFun (Ast.TInt, Ast.TInt)))),
+     (Ast.Fun (["l"; "default"],
+        (Ast.TFun ((Ast.TList Ast.TInt), (Ast.TFun (Ast.TInt, Ast.TInt)))),
+        (Ast.Match ((Ast.Var "l"),
+           [((Ast.MList [(Ast.MVar "h"); (Ast.MVar "t")]), (Ast.Var "h"));
+             ((Ast.MList []), (Ast.Var "default"))]
+           ))
+        ))
+     ));
+  (Ast.Let ("length", (Ast.TFun ((Ast.TList Ast.TInt), Ast.TInt)),
+     (Ast.Fun (["l"], (Ast.TFun ((Ast.TList Ast.TInt), Ast.TInt)),
+        (Ast.Match ((Ast.Var "l"),
+           [((Ast.MList [Ast.Blank; (Ast.MVar "t")]),
+             (Ast.NumOp (Ast.Add, (Ast.L (Ast.Int 1)),
+                (Ast.App ((Ast.Var "length"), [(Ast.Var "t")])))));
+             ((Ast.MList []), (Ast.L (Ast.Int 0)))]
+           ))
+        ))
+     ));
+  (Ast.Type ("exp",
+     [("AddExp", (Some [(Ast.TRecord "exp"); (Ast.TRecord "exp")]));
+       ("SubExp", (Some [(Ast.TRecord "exp"); (Ast.TRecord "exp")]));
+       ("Int", (Some [Ast.TInt]))]
+     ));
+  (Ast.Let ("eval", (Ast.TFun ((Ast.TRecord "exp"), Ast.TInt)),
+     (Ast.Fun (["e"], (Ast.TFun ((Ast.TRecord "exp"), Ast.TInt)),
+        (Ast.Match ((Ast.Var "e"),
+           [((Ast.MRecord ("Int", [(Ast.MVar "i")])), (Ast.Var "i"));
+             ((Ast.MRecord ("AddExp", [(Ast.MVar "e1"); (Ast.MVar "e2")])),
+              (Ast.LetIn ("i1", Ast.TInt,
+                 (Ast.App ((Ast.Var "eval"), [(Ast.Var "e1")])),
+                 (Ast.LetIn ("i2", Ast.TInt,
+                    (Ast.App ((Ast.Var "eval"), [(Ast.Var "e2")])),
+                    (Ast.NumOp (Ast.Add, (Ast.Var "i1"), (Ast.Var "i2")))))
+                 )));
+             ((Ast.MRecord ("SubExp", [(Ast.MVar "e1"); (Ast.MVar "e2")])),
+              (Ast.LetIn ("i1", Ast.TInt,
+                 (Ast.App ((Ast.Var "eval"), [(Ast.Var "e1")])),
+                 (Ast.LetIn ("i2", Ast.TInt,
+                    (Ast.App ((Ast.Var "eval"), [(Ast.Var "e2")])),
+                    (Ast.NumOp (Ast.Sub, (Ast.Var "i1"), (Ast.Var "i2")))))
+                 )))
+             ]
+           ))
+        ))
+     ));
+  (Ast.Type ("rec", [("A", (Some [Ast.TInt; Ast.TBool; Ast.TFloat]))]));
+  (Ast.Let ("get_int", (Ast.TFun ((Ast.TRecord "rec"), Ast.TInt)),
+     (Ast.Fun (["a"], (Ast.TFun ((Ast.TRecord "rec"), Ast.TInt)),
+        (Ast.Match ((Ast.Var "a"),
+           [((Ast.MRecord ("A", [(Ast.MVar "i"); Ast.Blank; Ast.Blank])),
+             (Ast.Var "i"))]
+           ))
+        ))
+     ));
+  (Ast.Let ("get_bool", (Ast.TFun ((Ast.TRecord "rec"), Ast.TBool)),
+     (Ast.Fun (["a"], (Ast.TFun ((Ast.TRecord "rec"), Ast.TBool)),
+        (Ast.Match ((Ast.Var "a"),
+           [((Ast.MRecord ("A", [Ast.Blank; (Ast.MVar "b"); Ast.Blank])),
+             (Ast.Var "b"))]
+           ))
+        ))
+     ));
+  (Ast.Let ("get_float", (Ast.TFun ((Ast.TRecord "rec"), Ast.TFloat)),
+     (Ast.Fun (["a"], (Ast.TFun ((Ast.TRecord "rec"), Ast.TFloat)),
+        (Ast.Match ((Ast.Var "a"),
+           [((Ast.MRecord ("A", [Ast.Blank; Ast.Blank; (Ast.MVar "f")])),
+             (Ast.Var "f"))]
+           ))
+        ))
+     ));
+  (Ast.Let ("reassemble_rec",
+     (Ast.TFun ((Ast.TRecord "rec"), (Ast.TRecord "rec"))),
+     (Ast.Fun (["r"], (Ast.TFun ((Ast.TRecord "rec"), (Ast.TRecord "rec"))),
+        (Ast.LetIn ("i", Ast.TInt,
+           (Ast.App ((Ast.Var "get_int"), [(Ast.Var "r")])),
+           (Ast.LetIn ("b", Ast.TBool,
+              (Ast.App ((Ast.Var "get_bool"), [(Ast.Var "r")])),
+              (Ast.LetIn ("f", Ast.TFloat,
+                 (Ast.App ((Ast.Var "get_float"), [(Ast.Var "r")])),
+                 (Ast.C
+                    (Ast.Record ("A",
+                       [(Ast.Var "i"); (Ast.Var "b"); (Ast.Var "f")])))
+                 ))
+              ))
+           ))
+        ))
+     ));
+  (Ast.Let ("test_reassemble", (Ast.TFun ((Ast.TRecord "rec"), Ast.TBool)),
+     (Ast.Fun (["r"], (Ast.TFun ((Ast.TRecord "rec"), Ast.TBool)),
+        (Ast.LetIn ("r2", (Ast.TRecord "rec"),
+           (Ast.App ((Ast.Var "reassemble_rec"), [(Ast.Var "r")])),
+           (Ast.Match ((Ast.C (Ast.Tuple [(Ast.Var "r"); (Ast.Var "r2")])),
+              [((Ast.MTuple
+                   [(Ast.MRecord ("A",
+                       [(Ast.MVar "i"); (Ast.MVar "b"); (Ast.MVar "f")]));
+                     (Ast.MRecord ("A",
+                        [(Ast.MVar "i2"); (Ast.MVar "b2"); (Ast.MVar "f2")]))
+                     ]),
+                (Ast.BinOp (Ast.Eq, (Ast.Var "i"),
+                   (Ast.BinOp (Ast.Eq,
+                      (Ast.BinOp (Ast.And, (Ast.Var "i2"), (Ast.Var "b"))),
+                      (Ast.BinOp (Ast.Eq,
+                         (Ast.BinOp (Ast.And, (Ast.Var "b2"), (Ast.Var "f"))),
+                         (Ast.Var "f2")))
+                      ))
+                   )))
+                ]
+              ))
+           ))
+        ))
+     ));
+  (Ast.Let ("deeply_nested_match",
+     (Ast.TFun ((Ast.TRecord "test"), Ast.TBool)),
+     (Ast.Fun (["t"], (Ast.TFun ((Ast.TRecord "test"), Ast.TBool)),
+        (Ast.Match ((Ast.Var "t"),
+           [((Ast.MTuple
+                [(Ast.MTuple
+                    [(Ast.MList [(Ast.MVar "h"); (Ast.MVar "t")]);
+                      (Ast.MList
+                         [Ast.Blank;
+                           (Ast.MList
+                              [(Ast.MRecord ("A",
+                                  [Ast.Blank; (Ast.MVar "b"); Ast.Blank]));
+                                Ast.Blank])
+                           ])
+                      ]);
+                  Ast.Blank]),
+             (Ast.BinOp (Ast.Eq, (Ast.Var "b"), (Ast.Var "h"))))]
+           ))
+        ))
+     ))
+  ]
+========================
+========= [../../../../examples/records.carml] =========
+[(Ast.Type ("r",
+    [("R1", (Some [Ast.TInt])); ("R2", (Some [Ast.TFloat]));
+      ("R3", (Some [Ast.TChar])); ("R4", (Some [Ast.TString]));
+      ("R5", (Some [Ast.TBool])); ("R6", None)]
+    ));
+  (Ast.Let ("r", (Ast.TRecord "r"),
+     (Ast.C (Ast.Record ("R1", [(Ast.L (Ast.Int 1))])))));
+  (Ast.Let ("r", (Ast.TRecord "r"),
+     (Ast.C (Ast.Record ("R2", [(Ast.L (Ast.Float 1.))])))));
+  (Ast.Let ("r", (Ast.TRecord "r"),
+     (Ast.C (Ast.Record ("R3", [(Ast.L (Ast.Char 'c'))])))));
+  (Ast.Let ("r", (Ast.TRecord "r"),
+     (Ast.C (Ast.Record ("R4", [(Ast.L (Ast.String "abc"))])))));
+  (Ast.Let ("r", (Ast.TRecord "r"),
+     (Ast.C (Ast.Record ("R5", [(Ast.L (Ast.Bool true))])))));
+  (Ast.Let ("r", (Ast.TRecord "r"), (Ast.C (Ast.Record ("R6", [])))));
+  (Ast.Type ("r2",
+     [("A", (Some [Ast.TInt; Ast.TInt]));
+       ("B", (Some [(Ast.TTuple (Ast.TInt, Ast.TInt)); Ast.TInt]))]
+     ));
+  (Ast.Let ("r2", (Ast.TRecord "r2"),
+     (Ast.C
+        (Ast.Record ("A",
+           [(Ast.L (Ast.Int 1)); (Ast.L (Ast.Int 2)); (Ast.L (Ast.Int 3))])))
+     ));
+  (Ast.Let ("r2", (Ast.TRecord "r2"),
+     (Ast.C
+        (Ast.Record ("B",
+           [(Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1)); (Ast.L (Ast.Int 2))]));
+             (Ast.L (Ast.Int 3))]
+           )))
+     ))
+  ]
+========================
+========= [../../../../examples/secret_types.carml] =========
+[(Ast.Let ("i", (Ast.TSecret Ast.TInt), (Ast.L (Ast.Int 1234))));
+  (Ast.Let ("b", (Ast.TSecret Ast.TBool), (Ast.L (Ast.Bool true))));
+  (Ast.Let ("f", (Ast.TSecret Ast.TFloat), (Ast.L (Ast.Float 1.234))));
+  (Ast.Let ("s", (Ast.TSecret Ast.TString),
+     (Ast.L (Ast.String "Hello, world"))));
+  (Ast.Let ("c", (Ast.TSecret Ast.TChar), (Ast.L (Ast.Char 'a'))));
+  (Ast.Let ("t", (Ast.TTuple ((Ast.TSecret Ast.TInt), Ast.TInt)),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t", (Ast.TTuple (Ast.TInt, (Ast.TSecret Ast.TInt))),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t", (Ast.TSecret (Ast.TTuple (Ast.TInt, Ast.TInt))),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t",
+     (Ast.TSecret (Ast.TTuple ((Ast.TSecret Ast.TInt), Ast.TInt))),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("t",
+     (Ast.TSecret
+        (Ast.TTuple ((Ast.TSecret Ast.TInt), (Ast.TSecret Ast.TInt)))),
+     (Ast.C (Ast.Tuple [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234))]))));
+  (Ast.Let ("l", (Ast.TList (Ast.TSecret Ast.TInt)),
+     (Ast.C
+        (Ast.List
+           [(Ast.L (Ast.Int 1234)); (Ast.L (Ast.Int 1234));
+             (Ast.L (Ast.Int 1234))]))
+     ));
+  (Ast.Let ("l", (Ast.TSecret (Ast.TList Ast.TInt)), (Ast.C (Ast.List []))));
+  (Ast.Let ("l", (Ast.TSecret (Ast.TList (Ast.TSecret Ast.TInt))),
+     (Ast.C (Ast.List []))))
+  ]
+========================
+========= [../../../../examples/simple_literals.carml] =========
+[(Ast.Let ("i", Ast.TInt, (Ast.L (Ast.Int 1234))));
+  (Ast.Let ("b", Ast.TBool, (Ast.L (Ast.Bool true))));
+  (Ast.Let ("f", Ast.TFloat, (Ast.L (Ast.Float 1.234))));
+  (Ast.Let ("s", Ast.TString, (Ast.L (Ast.String "Hello, world"))));
+  (Ast.Let ("c", Ast.TChar, (Ast.L (Ast.Char 'a'))));
+  (Ast.Let ("d", Ast.TUnit, (Ast.L Ast.Unit)))]
+========================

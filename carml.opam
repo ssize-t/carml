@@ -1,0 +1,5 @@
+opam-version: "2.0"
+name: "carml"
+version: "0.1"
+maintainer: "George Kharchenko kharchenko.george@gmail.com"
+build: ["dune" "build" "-p" name]

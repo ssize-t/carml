@@ -1,0 +1,6 @@
+let i: int = 1234;;
+let b: bool = true;;
+let f: float = 1.234;;
+let s: string = "Hello, world";;
+let c: char = 'a';;
+let d: unit = ();;

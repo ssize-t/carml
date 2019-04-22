@@ -1,0 +1,32 @@
+type log_lvl =
+    Debug |
+    Info |
+    Warn |
+    Fatal
+;;
+
+let log_lvl_to_int lvl: log_lvl -> int =
+    match lvl with
+    | Debug -> 0
+    | Info -> 1
+    | Warn -> 2
+    | Fatal -> 3
+;;
+
+let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
+    let l: int = (log_lvl_to_int l) in
+    fun msg lvl': string -> log_lvl -> unit ->>
+        let l': int = (log_lvl_to_int lvl') in
+        match l' >= l with
+        | true -> (print_string msg)
+        | _ -> ()
+;;
+
+let main: unit -> unit =
+    let log: string -> log_lvl -> unit = mk_log 1 in
+    log "debug" Debug;
+    log "info" Info;
+    log "warn" Warn;
+    log "fatal" Fatal;
+    ()
+;;
