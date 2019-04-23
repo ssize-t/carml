@@ -11,16 +11,26 @@ let typecheck_propagate (typecheck: 'a -> string option) (e: string option) (nod
   let new_e = typecheck node in
   propagate_error e new_e
 
-let rec match_typ (t: typ) (t': typ): bool =
+let rec match_typ (t: typ) (t': typ): (bool, string) result =
   match t, t' with
-  | TAny, _ -> true
-  | _, TAny -> true
-  | TFun (t1', t2'), TFun (t1'', t2'') -> (match_typ t1' t1'') && (match_typ t2' t2'')
-  | TTuple (t1', t2'), TTuple (t1'', t2'') -> (match_typ t1' t1'') && (match_typ t2' t2'')
-  | TRecord t1', TRecord t2' -> true (* TODO symbol table for this *)
+  | TAny, _ -> Ok true
+  | _, TAny -> Ok true
+  | TFun (t1', t2'), TFun (t1'', t2'') -> (
+    match (match_typ t1' t1''), (match_typ t2' t2'') with
+    | Ok e, Ok e' -> Ok (e && e')
+    | Error e, Error e2 -> Error (e ^ "\n" ^ e2)
+    | Error e, _ -> Error e
+    | _, Error e -> Error e
+  )
+  | TTuple t, TTuple t' -> (
+    match List.zip t t' with
+    | Some tt -> Ok (List.fold_left tt ~f:(fun acc (t, t') -> t = t' && acc) ~init:true)
+    | None -> Error "tuple type lengths do not match"
+  )
+  | TRecord t1', TRecord t2' -> Ok true (* TODO symbol table for this *)
   | TList t1', TList t2' -> match_typ t1' t2'
   | TSecret t1', TSecret t2' -> match_typ t1' t2'
-  | t1', t2' -> t1' = t2'
+  | t1', t2' -> Ok (t1' = t2')
 
 let rec typecheck_literal (t: typ) (l: literal): string option =
   match l, t with
@@ -51,26 +61,27 @@ let rec typecheck_match (t: typ) (e: expr) (match_branches: (match_branch * expr
       | MVar name -> Ok TAny (* TODO symbol table for this *)
       | Blank -> Ok TAny
       | MTuple branches -> (
-        let typs = List.map branches ~f:branch_to_typ in
-        let rec typ_list_to_tuple (typs: (typ, string) result list): (typ, string) result =
-          match typs with
-          | Error e :: _ -> Error e 
-          | [Ok t] -> Ok t
-          | Ok h :: t -> (
-            match typ_list_to_tuple t with
-            | Ok t' -> Ok (TTuple (h, t'))
-            | e -> e
-          )
-          | _ -> Error "tuple must have at least two elements"
-        in
-          typ_list_to_tuple typs
+        let typs = List.fold branches ~f:(fun acc t ->
+          match branch_to_typ t, acc with
+          | Ok typ, Ok typs -> Ok (typ :: typs)
+          | Error e, _ -> Error e
+          | _, Error e -> Error e
+        ) ~init:(Ok []) in
+        match typs with
+        | Ok typs -> Ok (TTuple typs)
+        | Error e -> Error e 
       )
       | MRecord (constructor, branches) -> Ok (TRecord constructor) (* TODO symbol table for this *)
       | MList branches -> (
         let typs = List.map branches ~f:branch_to_typ in
         let typ = List.reduce typs ~f:(fun t t' -> (
           match t, t' with
-          | Ok t, Ok t' -> if (match_typ t t') then Ok t else Error (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
+          | Ok t, Ok t' -> (
+            match match_typ t t' with
+            | Ok true -> Ok t
+            | Ok false -> Error (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
+            | Error e -> Error e
+          )
           | Error e, Ok _ -> Error e
           | Ok _, Error e -> Error e
           | Error e, Error e' -> Error (e ^ "\n" ^ e') 
@@ -92,25 +103,20 @@ let rec typecheck_match (t: typ) (e: expr) (match_branches: (match_branch * expr
     )
     | Error e -> Some e
   )
-(*
-  To disambiguate nested tuples from flat tuples,
-  tuple literals cannot have the same nested structure
-  as TTuple types, necessitating a custom typecheck
-*)
-and typecheck_tuple (typ: typ) (exprs: expr list): string option =
-  match exprs, typ with
-  | h :: rest, TTuple (t, t') -> (
-    let e1 = typecheck_expr t h in
-    let e2 = typecheck_tuple t' rest in
-    propagate_error e1 e2
-  )
-  | h :: [], t -> typecheck_expr t h
-  | [], typ -> Some (sprintf "tuple does not match type signature (%s extra)" (show_typ typ))
-  | rest, _ -> Some (sprintf "tuple does not match type signature (%s extra)" (List.fold rest ~f:(fun acc expr -> acc ^ "," ^ (show_expr expr)) ~init:""))
 and typecheck_complex (t: typ) (c: complex): string option =
   match c with
   | Tuple params when List.length params < 2 -> Some (sprintf "A tuple must have at least two members")
-  | Tuple e -> typecheck_tuple t e
+  | Tuple e -> (
+    match t with
+    | TTuple t -> (
+      match List.zip e t with
+      | Some expr_typs -> (
+        List.fold expr_typs ~f:(fun acc (e, t) -> typecheck_propagate (typecheck_expr t) acc e) ~init:None
+      )
+      | None -> Some (sprintf "Tuple %s length does not match %s" (show_typ (TTuple t)) (show_expr (C (Tuple e))))
+    )
+    | t' -> Some (sprintf "Expected tuple, found %s" (show_typ t')) 
+  )
   | Record (constructor, params) -> None (* TODO symbol table for this *)
   | List body -> (
     match t with
@@ -151,9 +157,10 @@ and typecheck_expr (t: typ) (expr: expr): string option =
     let result_typ = eat_param_typs typ params in
     match result_typ with
     | Ok result_typ -> (
-      let e1 = if match_typ typ t then None else Some (sprintf "%s does not match %s" (show_typ typ) (show_typ t)) in
-      let e2 = typecheck_expr result_typ body in
-      propagate_error e1 e2
+      match match_typ typ t with
+      | Ok true ->  typecheck_expr result_typ body
+      | Ok false -> Some (sprintf "%s does not match %s" (show_typ typ) (show_typ t))
+      | Error e -> Some e
     )
     | Error e -> Some e
   )

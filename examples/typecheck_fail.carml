@@ -22,3 +22,5 @@ let tuple_equal t1 t2: int * int -> int * int -> bool =
   | ((a, (b, c)), (a', b')) -> a = a' && b = b'
   | (_, _) -> false
 ;;
+
+let t: int * (int * int) = (1, 2, 3);;

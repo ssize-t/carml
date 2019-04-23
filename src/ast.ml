@@ -7,7 +7,7 @@ type typ =
   | TUnit
   (* Mutlivariate functions desugar into currying *)
   | TFun of typ * typ
-  | TTuple of typ * typ
+  | TTuple of typ list
   (* Name * optional constructor *)
   | TRecord of string
   | TList of typ
