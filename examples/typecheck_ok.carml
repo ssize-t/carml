@@ -1,0 +1,21 @@
+let a: int = 1234;;
+let b: bool = true;;
+let f: float = 1.234;;
+let c: char = 'a';;
+let s: string = "hello, world";;
+
+let t: int * int = (1, 2);;
+let t: int * (secret(int) list) = (1, [1; 2; 3]);;
+let t: (int -> int) * string = (fun a: int -> int ->> a, "a");;
+let t: (secret(int) * bool) * string = (
+  (1234, true),
+  "1234"
+);;
+
+let add a b: int -> int -> int = a + b;;
+
+let tuple_equal t1 t2: int * int -> int * int -> bool =
+  match (t1, t2) with
+  | ((a, b), (a', b')) -> a = a' && b = b'
+  | (_, _) -> false
+;;

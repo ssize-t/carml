@@ -12,6 +12,7 @@ type typ =
   | TRecord of string
   | TList of typ
   | TSecret of typ
+  | TAny
 [@@deriving show]
 
 type binop = Lt | Lte | Eq | Gt | Gte | Neq | And | Or

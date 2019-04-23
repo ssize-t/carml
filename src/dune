@@ -3,8 +3,6 @@
   (preprocess (pps ppx_jane ppx_deriving.std))
   (libraries core))
 
-(include_subdirs unqualified)
-
 (menhir
   (modules parser)
   (flags (--strict

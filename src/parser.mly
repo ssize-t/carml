@@ -36,6 +36,8 @@ open Ast
 
 %token EOF
 
+%right ARROW
+
 %right EQ NEQ
 %left AND OR
 %left GT GTE LTE LT
@@ -252,12 +254,12 @@ typ:
 compound_typ:
 | TSECRET LPAREN ccompound_typ RPAREN { TSecret $3 }
 | ssimple_typ { $1 }
-| ssimple_typ ARROW compound_typ { TFun ($1, $3) }
+| compound_typ ARROW compound_typ { TFun ($1, $3) }
 | ssimple_typ MULT compound_typ { TTuple ($1, $3) }
 ;
 
 ccompound_typ:
-| ssimple_typ ARROW compound_typ { TFun ($1, $3) }
+| compound_typ ARROW compound_typ { TFun ($1, $3) }
 | ssimple_typ MULT compound_typ { TTuple ($1, $3) }
 ;
 
