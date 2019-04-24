@@ -14,7 +14,7 @@ let log_lvl_to_int lvl: log_lvl -> int =
 ;;
 
 let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
-    let l: int = (log_lvl_to_int l) in
+    let l: int = (log_lvl_to_int lvl) in
     fun msg lvl': string -> log_lvl -> unit ->>
         let l': int = (log_lvl_to_int lvl') in
         match l' >= l with
@@ -22,7 +22,7 @@ let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
         | _ -> ()
 ;;
 
-let main: unit -> unit =
+let main: unit =
     let log: string -> log_lvl -> unit = mk_log 1 in
     log "debug" Debug;
     log "info" Info;

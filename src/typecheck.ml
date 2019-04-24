@@ -2,8 +2,8 @@ open Ast
 open Core
 
 type constructor =
-  | Nullary of string
-  | Nary of string * typ list
+  | Nullary of string * string (* constructor * parent *)
+  | Nary of string * string * typ list (* constructor * parent * typs *)
 
 type ttyp =
   | TBinding of typ
@@ -32,12 +32,12 @@ let typecheck_propagate (typecheck: 'a -> string option) (e: string option) (nod
   let new_e = typecheck node in
   propagate_error e new_e
 
-let rec match_typ (t: typ) (t': typ): (bool, string) result =
+let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
   match t, t' with
   | TAny, _ -> Ok true
   | _, TAny -> Ok true
   | TFun (t1', t2'), TFun (t1'', t2'') -> (
-    match (match_typ t1' t1''), (match_typ t2' t2'') with
+    match (match_typ t1' t1'' gamma), (match_typ t2' t2'' gamma) with
     | Ok e, Ok e' -> Ok (e && e')
     | Error e, Error e2 -> Error (e ^ "\n" ^ e2)
     | Error e, _ -> Error e
@@ -46,7 +46,7 @@ let rec match_typ (t: typ) (t': typ): (bool, string) result =
   | TTuple t, TTuple t' -> (
     match List.zip t t' with
     | Some tt -> List.fold_left tt ~f:(fun acc (t, t') -> (
-      match acc, match_typ t t' with
+      match acc, match_typ t t' gamma with
       | Ok t, Ok t' -> Ok (t && t')
       | Ok _, Error e -> Error e
       | Error e, Ok _ -> Error e
@@ -54,9 +54,17 @@ let rec match_typ (t: typ) (t': typ): (bool, string) result =
     )) ~init:(Ok true)
     | None -> Error "tuple type lengths do not match"
   )
-  | TRecord t1', TRecord t2' -> Ok (t1' = t2')
-  | TList t1', TList t2' -> match_typ t1' t2'
-  | TSecret t1', TSecret t2' -> match_typ t1' t2'
+  | TRecord t1', TRecord t2' -> (
+    match gamma t1' with
+    | Some (TConstructor Nullary (_, parent_typ)) when parent_typ = t2' -> Ok true
+    | Some (TConstructor Nary (_, parent_typ, _)) when parent_typ = t2' -> Ok true
+    | Some (TConstructor _) -> Error (sprintf "constructor %s does not belong to type %s" t1' t2')
+    | Some (TType _) -> Ok (t1' = t2')
+    | Some (TBinding _) -> Error (sprintf "%s refers to a binding, not a constructor" t1')
+    | None -> Error (sprintf "%s not found in current environment" t1')
+  )
+  | TList t1', TList t2' -> match_typ t1' t2' gamma
+  | TSecret t1', TSecret t2' -> match_typ t1' t2' gamma
   | t1', t2' -> Ok (t1' = t2')
 
 let rec typecheck_literal (t: typ) (l: literal): string option =
@@ -121,7 +129,7 @@ let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_
         let typ = List.reduce typs ~f:(fun t t' -> (
           match t, t' with
           | Ok (g, t), Ok (g', t') -> (
-            match match_typ t t' with
+            match match_typ t t' gamma with
             | Ok true -> Ok (g, t)
             | Ok false -> Error (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
             | Error e -> Error e
@@ -163,12 +171,12 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): string option =
   )
   | Record (constructor, params) -> (
     match gamma constructor with
-    | Some (TConstructor (Nullary c')) -> (
+    | Some (TConstructor (Nullary (c', _))) -> (
       match params with
       | [] -> None
       | params -> Some (sprintf "Too many arguments for constructor %s (0 required)" constructor)
     )
-    | Some (TConstructor (Nary (c', typs))) -> (
+    | Some (TConstructor (Nary (c', _, typs))) -> (
       let param_typs = List.zip params typs in
       match param_typs with
       | Some param_typs -> (
@@ -201,6 +209,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
   | UnOp (op, e) -> (
     match t with
     | TBool -> typecheck_expr TBool gamma e
+    | TAny -> None
     | t' -> Some (sprintf "attempted to assign the result of a unary expression to type %s, expected %s" (show_typ t') (show_typ TBool))
   )
   | BinOp (op, e1, e2) -> (
@@ -226,6 +235,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
       let e2' = typecheck_expr TBool gamma e2 in
       propagate_error e1' e2'
     )
+    | op', TAny -> None
     | op', t -> Some (sprintf "attempted to assign the result of a binary expression to type %s, expected %s" (show_typ t) (show_typ TBool))
   )
   | NumOp (op, e1, e2) -> (
@@ -235,13 +245,14 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
       let e2' = typecheck_expr t' gamma e2 in
       propagate_error e1' e2'
     )
+    | TAny -> None
     | t' -> Some (sprintf "attempted to assign the result of an arithmetic expression to type %s, %s or %s expected" (show_typ t') (show_typ TInt) (show_typ TFloat))
   )
   | Var name -> (
     match gamma name with
     | None -> Some (sprintf "Name %s not found in current environment" name)
     | Some (TBinding t') -> (
-      match match_typ t t' with
+      match match_typ t t' gamma with
       | Ok true -> None
       | Ok false -> Some (sprintf "Type of variable %s (%s) does not match required %s" name (show_typ t') (show_typ t))
       | Error e -> Some e
@@ -258,7 +269,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
   | Fun (params, typ, body) -> (
     match construct_env typ params gamma with
     | Ok (gamma', result_typ) -> (
-      match match_typ typ t with
+      match match_typ typ t gamma with
       | Ok true ->  typecheck_expr result_typ gamma' body
       | Ok false -> Some (sprintf "%s does not match %s" (show_typ typ) (show_typ t))
       | Error e -> Some e
@@ -279,7 +290,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
             propagate_error e1 e2
           )
           | [], t' -> (
-            match match_typ t t' with
+            match match_typ t t' gamma with
             | Ok true -> None
             | Ok false -> Some (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
             | Error e -> Some e
@@ -295,7 +306,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
     | Fun (pparams, typ, body) -> (
       match construct_env typ pparams gamma with
       | Ok (gamma', result_typ) -> (
-        match match_typ result_typ t with
+        match match_typ result_typ t gamma with
         | Ok true ->  typecheck_expr result_typ gamma' body
         | Ok false -> Some (sprintf "%s does not match %s" (show_typ result_typ) (show_typ t))
         | Error e -> Some e
@@ -314,18 +325,18 @@ let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * string)) result =
     | None -> Ok gamma'
     | Some e -> Error (gamma', e)
   )
-  | Type (name, constructors) -> (
+  | Type (parent_name, constructors) -> (
     let type_constructors = List.map constructors ~f:(fun (name, typs) -> (
       match typs with
-      | None -> Nullary name
-      | Some typs -> Nary (name, typs)
+      | None -> Nullary (name, parent_name)
+      | Some typs -> Nary (name, parent_name, typs)
     )) in
     let gamma' = List.fold type_constructors ~f:(fun acc c -> (
       match c with
-      | Nullary name -> update acc name (TConstructor (Nullary name))
-      | Nary (name, typs) -> update acc name (TConstructor (Nary (name, typs)))
+      | Nullary (name, parent_name) -> update acc name (TConstructor (Nullary (name, parent_name)))
+      | Nary (name, parent_name, typs) -> update acc name (TConstructor (Nary (name, parent_name, typs)))
     )) ~init:gamma in
-    let gamma'' = update gamma' name (TType type_constructors) in
+    let gamma'' = update gamma' parent_name (TType type_constructors) in
     Ok gamma''
   )
 
