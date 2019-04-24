@@ -12,10 +12,10 @@ let obfuscate msg: secret(string) -> string =
 let log msg: string -> unit = print msg;;
 let log msg: secret(string) -> unit = print (obfuscate msg);;
 
-let main: unit -> unit =
+let main: unit =
   let token: secret(string) = load_secret_value () in
-  log "Loaded secret value";
-  log token
+  log token;
+  log "Loaded secret value"
 ;;
 ```
 
