@@ -15,7 +15,18 @@ let t: (secret(int) * bool) * string * bool = (
 let l: int list = ['a'; 'b'; 'c'];;
 let l: int list = [1; 2; 'a'];;
 
+let fst l: int list -> int =
+  match l with
+  | h :: t -> h
+  | [] -> 0
+;;
+
+let a: bool = fst l;;
+
+let a: int = (fun a: int -> bool ->> a < 0) 12;;
+
 let add a b: int -> int = a + b;;
+let add a b: int -> int -> bool = a + b;;
 
 let tuple_equal t1 t2: int * int -> int * int -> bool =
   match (t1, t2) with
@@ -23,4 +34,5 @@ let tuple_equal t1 t2: int * int -> int * int -> bool =
   | (_, _) -> false
 ;;
 
+let t: int * (int * int) = (1, 2, 3);;
 let t: int * (int * int) = (1, 2, 3);;

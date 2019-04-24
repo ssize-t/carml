@@ -38,8 +38,8 @@ open Ast
 
 %right ARROW
 
-%right EQ NEQ
 %left AND OR
+%right EQ NEQ
 %left GT GTE LTE LT
 %left ADD SUB
 %left MULT DIV
@@ -195,14 +195,14 @@ unop:
 ;
 
 binop:
+| primary_expression AND primary_expression { BinOp (And, $1, $3) }
+| primary_expression OR primary_expression { BinOp (Or, $1, $3) }
 | primary_expression LT primary_expression { BinOp (Lt, $1, $3) }
 | primary_expression LTE primary_expression { BinOp (Lte, $1, $3) }
 | primary_expression GT primary_expression { BinOp (Gt, $1, $3) }
 | primary_expression GTE primary_expression { BinOp (Gte, $1, $3) }
 | primary_expression EQ primary_expression { BinOp (Eq, $1, $3) }
 | primary_expression NEQ primary_expression { BinOp (Neq, $1, $3) }
-| primary_expression AND primary_expression { BinOp (And, $1, $3) }
-| primary_expression OR primary_expression { BinOp (Or, $1, $3) }
 ;
 
 numop:

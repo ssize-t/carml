@@ -12,7 +12,7 @@ let t: (secret(int) * bool) * string = (
   "1234"
 );;
 
-let add a b: int -> int -> int = a + b;;
+let add a b: int -> int -> bool = a < b;;
 
 let tuple_equal t1 t2: int * int -> int * int -> bool =
   match (t1, t2) with
@@ -21,3 +21,4 @@ let tuple_equal t1 t2: int * int -> int * int -> bool =
 ;;
 
 let t: int * int * int = (1, 2, 3);;
+let t: int * (int * int) = (1, (2, 3));;
