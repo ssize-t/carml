@@ -22,7 +22,7 @@ let float = number + '.' + digit+
 let lower_alpha = ['a'-'z'] | '_' | '\''
 let upper_alpha = ['A'-'Z']
 let alpha = lower_alpha | upper_alpha
-let char = '\'' + alpha + '\''
+let char = '\'' + _ + '\''
 let value_ident = lower_alpha (alpha | digit)*
 let type_ident = upper_alpha (alpha | digit)*
 
