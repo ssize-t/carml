@@ -77,9 +77,10 @@ let add1: int -> int = fun a: int -> int ->> a + 1;;
 ```
 
 #### Pattern matching
+Each branch of a match expression requires a separate type annotation, to disambiguate a function type (single arrow), the match expression uses the double arrow, like the function expression.
 ```
 match expression with
-| match_expression -> expression 
+| match_expression: type ->> expression 
 ```
 * Match expressions
 ```
