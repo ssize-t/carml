@@ -110,6 +110,7 @@ applicable_expression:
 | simple_expression { $1 }
 /* Below is not great */
 | TYPE_IDENT { C (Record ($1, [])) }
+| LPAREN expression COMMA comma_sep_expr RPAREN { C (Tuple ($2 :: $4)) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
@@ -145,7 +146,7 @@ match_branches:
 ;
 
 match_branch:
-| primary_match_branch ARROW primary_expression { ($1, $3) }
+| primary_match_branch COLON styp DOUBLE_ARROW primary_expression { ($1, $3, $5) }
 ;
 
 primary_match_branch:

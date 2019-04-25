@@ -34,8 +34,6 @@ let typecheck_propagate (typecheck: 'a -> string option) (e: string option) (nod
 
 let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
   match t, t' with
-  | TAny, _ -> Ok true
-  | _, TAny -> Ok true
   | TFun (t1', t2'), TFun (t1'', t2'') -> (
     match (match_typ t1' t1'' gamma), (match_typ t2' t2'' gamma) with
     | Ok e, Ok e' -> Ok (e && e')
@@ -65,6 +63,8 @@ let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
   )
   | TList t1', TList t2' -> match_typ t1' t2' gamma
   | TSecret t1', TSecret t2' -> match_typ t1' t2' gamma
+  | TSecret _, _ -> Ok false
+  | _, TSecret _ -> Ok false
   | t1', t2' -> Ok (t1' = t2')
 
 let rec typecheck_literal (t: typ) (l: literal): string option =
@@ -78,82 +78,72 @@ let rec typecheck_literal (t: typ) (l: literal): string option =
   | l', TSecret t' -> typecheck_literal t' l'
   | l', t' -> Some (sprintf "Expected type %s, found %s" (show_typ t') (show_literal l'))
 
-let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_branch * expr) list): string option =
+let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_branch * typ * expr) list): string option =
   match match_branches with
   | [] -> None
-  | (branch, branch_expr) :: rest -> (
-    let rec branch_to_typ (branch: match_branch) (gamma: env): (env * typ, string) result =
-      let rec branches_to_typs (branches: match_branch list) (gamma: env) =
-        List.fold branches ~f:(fun acc t ->
-          match acc with
-          | Error e -> Error e
-          | Ok (g, typs) -> (
-            match branch_to_typ t g with
-            | Ok (g', typ) -> Ok (g', typ :: typs)
+  | (branch, branch_typ, branch_expr) :: rest -> (
+    let rec match_typ_shape (branch: match_branch) (branch_typ: typ) (gamma: env) =
+      let rec match_typ_shapes (branches: match_branch list) (branch_typs: typ list) (gamma: env) =
+        let branch_typs = List.zip branches branch_typs in
+        match branch_typs with
+        | Some branch_typs -> (
+          List.fold branch_typs ~f:(fun acc (b, t) ->
+            match acc with
             | Error e -> Error e
-          )
-        ) ~init:(Ok (gamma, []))
+            | Ok g -> (
+              match match_typ_shape b t g with
+              | Ok g' -> Ok g'
+              | Error e -> Error e
+            )
+          ) ~init:(Ok gamma)
+        )
+        | None -> Error (sprintf ("number of types does not match number of expressions"))
       in
-      match branch with
-      | ML l -> (
-        match l with
-        | Unit -> Ok (gamma, TUnit)
-        | Int _ -> Ok (gamma, TInt)
-        | Float _ -> Ok (gamma, TFloat)
-        | String _ -> Ok (gamma, TString)
-        | Char _ -> Ok (gamma, TChar)
-        | Bool _ -> Ok (gamma, TBool)
+      match branch, branch_typ with
+      | ML l, t' when typecheck_literal t' l = None -> Ok gamma
+      | MVar name, t' -> Ok ((update gamma name (TBinding t')))
+      | Blank, _ -> Ok gamma
+      | MTuple branches, TTuple typs -> (
+        match match_typ_shapes branches typs gamma with
+        | Ok gamma' -> Ok gamma'
+        | Error e -> Error ("Tuple shape does not match type: " ^ e)
       )
-      | MVar name -> Ok ((update gamma name (TBinding TAny)), TAny) (* TODO this should have a real type once types are inferred *)
-      | Blank -> Ok (gamma, TAny)
-      | MTuple branches -> (
-        let typs = branches_to_typs branches gamma in
-        match typs with
-        | Ok (g, typs) -> Ok (g, TTuple typs)
-        | Error e -> Error e
-      )
-      | MRecord (constructor, branches) -> (
+      | MRecord (constructor, argument_branches), TRecord c -> (
         match gamma constructor with
         | Some (TConstructor c) -> (
-          let typs = branches_to_typs branches gamma in
-          match typs with
-          | Ok (g, typs) -> Ok(g, TRecord constructor)
-          | Error e -> Error e
+          match c with
+          | Nullary (c, parent_typ) -> (
+            match List.length argument_branches with
+            | 0 -> Ok gamma
+            | n -> Error (sprintf "constructor %s does not take arguments, %d supplied" c n)
+          )
+          | Nary (c, parent_typ, argument_typs) -> (
+            match match_typ_shapes argument_branches argument_typs gamma with
+            | Ok gamma' -> Ok gamma'
+            | Error e -> Error ("Constructor arguments do not match required types: " ^ e)
+          )
         )
         | Some (TBinding t) -> Error (sprintf "Name %s refers to a binding, not a constructor" constructor)
         | Some (TType t) -> Error (sprintf "Name %s refers to a type, not a constructor" constructor)
         | None -> Error (sprintf "Name %s not found in current environment" constructor)
       )
-      | MList branches -> (
-        let typs = List.map branches ~f:(fun b -> branch_to_typ b gamma) in
-        let typ = List.reduce typs ~f:(fun t t' -> (
-          match t, t' with
-          | Ok (g, t), Ok (g', t') -> (
-            match match_typ t t' gamma with
-            | Ok true -> Ok (g, t)
-            | Ok false -> Error (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
-            | Error e -> Error e
-          )
-          | Error e, Ok _ -> Error e
-          | Ok _, Error e -> Error e
-          | Error e, Error e' -> Error (e ^ "\n" ^ e') 
-        )) in
-          match typ with
-          | Some Ok (g, t) -> Ok (g, TList t)
-          | Some Error e -> Error e
-          | _ -> Error "a list must contain items of the same typs"
+      | MList branches, TList t' -> (
+        let branch_typs = List.init (List.length branches) ~f:(fun _ -> t') in
+        match match_typ_shapes branches branch_typs gamma with
+        | Ok gamma' -> Ok gamma'
+        | Error e -> Error (sprintf "Expected list of type %s: %s" (show_typ t') e)
       )
+      | l, t' -> Error (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (show_typ t'))
     in
-    let branch_typ = branch_to_typ branch gamma in
-    match branch_typ with
-    | Ok (gamma', branch_typ) -> (
+    match match_typ_shape branch branch_typ gamma with
+    | Error e -> Some e
+    | Ok gamma' -> (
       let e1 = typecheck_expr branch_typ gamma e in
       let e2 = typecheck_expr t gamma' branch_expr in
       let branch_e = propagate_error e1 e2 in
       let rest_e = typecheck_match t gamma e rest in
       propagate_error branch_e rest_e
     )
-    | Error e -> Some e
   )
 and typecheck_complex (t: typ) (gamma: env) (c: complex): string option =
   match c with
@@ -209,7 +199,6 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
   | UnOp (op, e) -> (
     match t with
     | TBool -> typecheck_expr TBool gamma e
-    | TAny -> None
     | t' -> Some (sprintf "attempted to assign the result of a unary expression to type %s, expected %s" (show_typ t') (show_typ TBool))
   )
   | BinOp (op, e1, e2) -> (
@@ -235,7 +224,6 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
       let e2' = typecheck_expr TBool gamma e2 in
       propagate_error e1' e2'
     )
-    | op', TAny -> None
     | op', t -> Some (sprintf "attempted to assign the result of a binary expression to type %s, expected %s" (show_typ t) (show_typ TBool))
   )
   | NumOp (op, e1, e2) -> (
@@ -245,7 +233,6 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
       let e2' = typecheck_expr t' gamma e2 in
       propagate_error e1' e2'
     )
-    | TAny -> None
     | t' -> Some (sprintf "attempted to assign the result of an arithmetic expression to type %s, %s or %s expected" (show_typ t') (show_typ TInt) (show_typ TFloat))
   )
   | Var name -> (

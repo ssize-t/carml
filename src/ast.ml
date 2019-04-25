@@ -12,7 +12,6 @@ type typ =
   | TRecord of string
   | TList of typ
   | TSecret of typ
-  | TAny
 [@@deriving show]
 
 type binop = Lt | Lte | Eq | Gt | Gte | Neq | And | Or
@@ -33,7 +32,7 @@ type expr =
   | Var of string
   | LetIn of string * typ * expr * expr
   | Fun of string list * typ * expr
-  | Match of expr * (match_branch * expr) list
+  | Match of expr * (match_branch * typ * expr) list
   | App of expr * expr list
   | Seq of expr * expr
 
