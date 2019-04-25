@@ -17,8 +17,8 @@ let l: int list = [1; 2; 'a'];;
 
 let fst l: int list -> int =
   match l with
-  | h :: t -> h
-  | [] -> 0
+  | h :: t: int list ->> h
+  | []: int list ->> 0
 ;;
 
 let a: bool = fst l;;
@@ -30,9 +30,24 @@ let add a b: int -> int -> bool = a + b;;
 
 let tuple_equal t1 t2: int * int -> int * int -> bool =
   match (t1, t2) with
-  | ((a, (b, c)), (a', b')) -> a = a' && b = b'
-  | (_, _) -> false
+  | ((a, (b, c)), (a', b')): int * int ->> a = a' && b = b'
+  | (_, _): (int * int) * (int * int) ->> false
+;;
+
+let tuple_equal t1 t2: int * int -> int * int -> bool =
+  match (t1, t2) with
+  | ((a, b), (a', b')): (int * int) * (int * int) ->> a a'
+  | (_, _): (int * int) * (int * int) ->> false
 ;;
 
 let t: int * (int * int) = (1, 2, 3);;
 let t: int * (int * int) = (1, 2, 3);;
+
+let username: secret(string) = "password";;
+let password: string = "username";;
+
+let print_plain s: string -> unit = s; ();;
+let print_secret s: secret(string) -> unit = s; ();;
+
+let u: unit = print_secret password;;
+let u: unit = print_plain username;;
