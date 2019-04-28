@@ -31,6 +31,7 @@ rule micro = parse
   | "let"       { LET }
   | "in"        { IN }
   | "fun"       { FUN }
+  | "rec"       { REC }
   | "type"      { TYPE }
   | "match"     { MATCH }
   | "of"        { OF }

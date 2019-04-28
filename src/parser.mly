@@ -27,7 +27,7 @@ open Ast
 
 %token <string> VALUE_IDENT TYPE_IDENT
 
-%token LET IN FUN
+%token LET IN FUN REC
 
 %token LPAREN RPAREN
 %token COMMA COLON DOUBLE_COLON
@@ -61,7 +61,9 @@ statements:
 
 statement:
 | LET VALUE_IDENT COLON styp EQ eexpression { Let ($2, $4, $6) }
+| LET REC VALUE_IDENT COLON styp EQ eexpression { LetRec ($3, $5, $7) }
 | LET VALUE_IDENT params COLON styp EQ eexpression { Let ($2, $5, Fun ($3, $5, $7)) }
+| LET REC VALUE_IDENT params COLON styp EQ eexpression { LetRec ($3, $6, Fun ($4, $6, $8)) }
 | TYPE VALUE_IDENT EQ typedecls { Type ($2, $4) }
 ;
 
@@ -88,6 +90,7 @@ eexpression:
 expression:
 | primary_expression { $1 }
 | LET VALUE_IDENT COLON styp EQ expression IN expression { LetIn ($2, $4, $6, $8) }
+| LET REC VALUE_IDENT COLON styp EQ expression IN expression { LetRecIn ($3, $5, $7, $9) }
 | FUN params COLON styp DOUBLE_ARROW expression { Fun ($2, $4, $6) }
 | MATCH primary_expression WITH match_branches { Match ($2, $4) }
 ;

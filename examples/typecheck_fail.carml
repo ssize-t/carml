@@ -51,3 +51,29 @@ let print_secret s: secret(string) -> unit = s; ();;
 
 let u: unit = print_secret (password: secret(string));;
 let u: unit = print_plain (username: string);;
+
+let length l: int list -> int =
+  match l with
+  | _ :: t: int list ->> 1 + (length (t: int list))
+  | []: int list ->> 0
+;;
+
+let rev l: int list -> int list =
+  match l with
+  | h :: t: int list ->> (rev (t: int list)) :: ([h])
+  | []: int list ->> []
+;;
+
+let length: int list -> int =
+  fun l: int list -> int list ->>
+  match l with
+  | _ :: t: int list ->> 1 + (length (t: int list))
+  | []: int list ->> 0
+;;
+
+let rev: int list -> int list =
+  fun l: int list -> int list ->>
+  match l with
+  | h :: t: int list ->> (rev (t: int list)) :: ([h])
+  | []: int list ->> []
+;;

@@ -254,6 +254,12 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
     let e2 = typecheck_expr t gamma' rest in
     propagate_error e1 e2
   )
+  | LetRecIn (name, typ, body, rest) -> (
+    let gamma' = update gamma name (TBinding typ) in
+    let e1 = typecheck_expr typ gamma' body in
+    let e2 = typecheck_expr t gamma' rest in
+    propagate_error e1 e2
+  )
   | Fun (params, typ, body) -> (
     match construct_env typ params gamma with
     | Ok (gamma', result_typ) -> (
@@ -298,6 +304,12 @@ let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * string)) result =
   | Let (name, typ, body) -> (
     let gamma' = update gamma name (TBinding typ) in
     match typecheck_expr typ gamma body with
+    | None -> Ok gamma'
+    | Some e -> Error (gamma', e)
+  )
+  | LetRec (name, typ, body) -> (
+    let gamma' = update gamma name (TBinding typ) in
+    match typecheck_expr typ gamma' body with
     | None -> Ok gamma'
     | Some e -> Error (gamma', e)
   )

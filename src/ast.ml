@@ -31,6 +31,7 @@ type expr =
   | NumOp of numop * expr * expr
   | Var of string
   | LetIn of string * typ * expr * expr
+  | LetRecIn of string * typ * expr * expr
   | Fun of string list * typ * expr
   | Match of expr * (match_branch * typ * expr) list
   | App of expr * (expr * typ) list
@@ -64,6 +65,7 @@ and match_branch =
 
 type stmt =
   | Let of string * typ * expr
+  | LetRec of string * typ * expr
   | Type of string * (string * typ list option) list
 [@@deriving show]
 
