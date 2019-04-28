@@ -75,6 +75,14 @@ The top-level function statement is syntactic sugar for a variable-binding of a 
 let add1 a: int -> int = a + 1;;
 let add1: int -> int = fun a: int -> int ->> a + 1;;
 ```
+Function applications require explicit type annotations on arguments
+```ml
+let b: bool = (fun gt0 x: int -> bool ->> x > 0) (1: int);;
+```
+Partial application is supported
+```ml
+let b: int -> bool = (fun gt a b: int -> int ->> a > b) (1: int);;
+```
 
 #### Pattern matching
 Each branch of a match expression requires a separate type annotation, to disambiguate a function type (single arrow), the match expression uses the double arrow, like the function expression.
