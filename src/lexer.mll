@@ -4,13 +4,13 @@ open Parser
 
 let line_num = ref 1
 
-exception Syntax_error of string
+exception SyntaxError of string
 module B = Buffer
 module L = Lexing
 let get      = L.lexeme
 let sprintf  = Printf.sprintf
 
-let syntax_error msg = raise (Syntax_error (msg ^ " on line " ^ (string_of_int !line_num)))
+let syntax_error msg = raise (SyntaxError (msg ^ " on line " ^ (string_of_int !line_num)))
 
 }
 
@@ -22,9 +22,9 @@ let float = number + '.' + digit+
 let lower_alpha = ['a'-'z'] | '_' | '\''
 let upper_alpha = ['A'-'Z']
 let alpha = lower_alpha | upper_alpha
-let char = '\'' + _ + '\''
 let value_ident = lower_alpha (alpha | digit)*
 let type_ident = upper_alpha (alpha | digit)*
+let char = "'" [^ '\\' '\'' '\010' '\013'] "'"
 
 rule micro = parse
   | '='         { EQ }
@@ -54,10 +54,14 @@ rule micro = parse
   | "()"        { UNIT }
   | "true"      { BOOL(true) }
   | "false"     { BOOL(false) }
-  | char as c   { CHAR(String.get c 1) }
   | float as f  { FLOAT(float_of_string f) }
   | number as n { INT(int_of_string n) }
-  | '"'         { STRING (string (B.create 100) lexbuf) }
+  | char        { CHAR (Lexing.lexeme_char lexbuf 1) }
+  | "'\\''"     { CHAR ('\'') }
+  | "'\\n'"     { CHAR ('\n') }
+  | "'\\t'"     { CHAR ('\t') }
+  | "'\\r'"     { CHAR ('\r') }
+  | '"'         { STRING (read_string (B.create 100) lexbuf) }
 
   | "int"       { TINT }
   | "bool"      { TBOOL }
@@ -89,19 +93,17 @@ rule micro = parse
   | blank       { micro lexbuf }
   | _           { syntax_error "couldn't identify the token" }
   | eof         { EOF }
-and string buf = parse 
-  | [^'"' '\n' '\\']+  
-    { B.add_string buf @@ get lexbuf
-    ; string buf lexbuf 
+and read_string buf =
+  parse
+  | '"'       { Buffer.contents buf }
+  | '\\' '/'  { Buffer.add_char buf '/'; read_string buf lexbuf }
+  | '\\' '\\' { Buffer.add_char buf '\\'; read_string buf lexbuf }
+  | '\\' 'n'  { Buffer.add_char buf '\n'; read_string buf lexbuf }
+  | '\\' 'r'  { Buffer.add_char buf '\r'; read_string buf lexbuf }
+  | '\\' 't'  { Buffer.add_char buf '\t'; read_string buf lexbuf }
+  | [^ '"' '\\']+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      read_string buf lexbuf
     }
-  | '\n'      { B.add_string buf @@ get lexbuf
-    ; L.new_line lexbuf
-    ; string buf lexbuf
-    }
-  | '\\' '"'  { B.add_char buf '"'
-    ; string buf lexbuf
-    }
-  | '\\'      { B.add_char buf '\\'
-    ; string buf lexbuf
-    }
-  | '"'       { B.contents buf } (* return *)
+  | _ { raise (SyntaxError ("Illegal string character: " ^ Lexing.lexeme lexbuf)) }
+  | eof { raise (SyntaxError ("String is not terminated")) }
