@@ -21,22 +21,22 @@ let fst l: int list -> int =
   | []: int list ->> 0
 ;;
 
-let a: bool = fst l;;
+let a: bool = fst (l: int list);;
 
-let a: int = (fun a: int -> bool ->> a < 0) 12;;
+let a: int = (fun a: int -> bool ->> a < 0) (12: int);;
 
 let add a b: int -> int = a + b;;
 let add a b: int -> int -> bool = a + b;;
 
-let tuple_equal t1 t2: int * int -> int * int -> bool =
+let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match (t1, t2) with
   | ((a, (b, c)), (a', b')): int * int ->> a = a' && b = b'
   | (_, _): (int * int) * (int * int) ->> false
 ;;
 
-let tuple_equal t1 t2: int * int -> int * int -> bool =
+let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match (t1, t2) with
-  | ((a, b), (a', b')): (int * int) * (int * int) ->> a a'
+  | ((a, b), (a', b')): (int * int) * (int * int) ->> a (a': int)
   | (_, _): (int * int) * (int * int) ->> false
 ;;
 
@@ -49,5 +49,5 @@ let password: string = "username";;
 let print_plain s: string -> unit = s; ();;
 let print_secret s: secret(string) -> unit = s; ();;
 
-let u: unit = print_secret password;;
-let u: unit = print_plain username;;
+let u: unit = print_secret (password: secret(string));;
+let u: unit = print_plain (username: string);;

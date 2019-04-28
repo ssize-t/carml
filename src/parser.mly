@@ -36,8 +36,6 @@ open Ast
 
 %token EOF
 
-%right ARROW
-
 %left AND OR
 %right EQ NEQ
 %left GT GTE LTE LT
@@ -97,9 +95,17 @@ expression:
 primary_expression:
 | simple_expression { $1 }
 | complex_expression { $1 }
-| applicative_expression applicable_expressions { App ($1, $2) }
+| applicative_expression typed_applicable_expressions { App ($1, $2) }
 | LPAREN eexpression RPAREN { $2 }
 ;
+
+typed_applicable_expression:
+| LPAREN applicable_expression COLON styp RPAREN { ($2, $4) }
+;
+
+typed_applicable_expressions:
+| typed_applicable_expression { [$1] }
+| typed_applicable_expression typed_applicable_expressions { $1 :: $2 }
 
 applicative_expression:
 | VALUE_IDENT { Var $1 }
@@ -112,11 +118,6 @@ applicable_expression:
 | TYPE_IDENT { C (Record ($1, [])) }
 | LPAREN expression COMMA comma_sep_expr RPAREN { C (Tuple ($2 :: $4)) }
 | LPAREN eexpression RPAREN { $2 }
-;
-
-applicable_expressions:
-| applicable_expression { [$1] }
-| applicable_expression applicable_expressions { $1 :: $2 }
 ;
 
 simple_expression:
@@ -255,18 +256,23 @@ typ:
 compound_typ:
 | TSECRET LPAREN ccompound_typ RPAREN { TSecret $3 }
 | ssimple_typ { $1 }
-| compound_typ ARROW compound_typ { TFun ($1, $3) }
-| ssimple_typ MULT mult_separated_compund_typs { TTuple ($1 :: $3) }
+| ssimple_typ ARROW arrow_separated_ssimple_typs { TFun ($1 :: $3) }
+| ssimple_typ MULT mult_separated_ssimple_typs { TTuple ($1 :: $3) }
 ;
 
-mult_separated_compund_typs:
+arrow_separated_ssimple_typs:
 | ssimple_typ { [$1] }
-| ssimple_typ MULT mult_separated_compund_typs { $1 :: $3 }
+| ssimple_typ ARROW arrow_separated_ssimple_typs { $1 :: $3 }
+;
+
+mult_separated_ssimple_typs:
+| ssimple_typ { [$1] }
+| ssimple_typ MULT mult_separated_ssimple_typs { $1 :: $3 }
 ;
 
 ccompound_typ:
-| ssimple_typ ARROW compound_typ { TFun ($1, $3) }
-| ssimple_typ MULT mult_separated_compund_typs { TTuple ($1 :: $3) }
+| ssimple_typ ARROW arrow_separated_ssimple_typs { TFun ($1 :: $3) }
+| ssimple_typ MULT mult_separated_ssimple_typs { TTuple ($1 :: $3) }
 ;
 
 %%

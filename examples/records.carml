@@ -15,5 +15,5 @@ let r: r = R6;;
 
 type r2 = A of int * int | B of (int * int) * int;;
 
-let r2: r2 = A (1, 2, 3);;
+let r2: r2 = A (1, 2);;
 let r2: r2 = B ((1, 2), 3);;

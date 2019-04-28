@@ -1,9 +1,9 @@
-let fst t: int * int -> int =
+let fst t: (int * int) -> int =
   match t with
   | (h, _): int * int ->> h
 ;;
 
-let snd t: int * int -> int =
+let snd t: (int * int) -> int =
   match t with
   | (_, t): int * int ->> t
 ;;
@@ -16,7 +16,7 @@ let head l default: int list -> int -> int =
 
 let length l: int list -> int =
   match l with
-  | _ :: t: int list ->> 1 + length t
+  | _ :: t: int list ->> 1 + length (t: int list)
   | []: int list ->> 0
 ;;
 
@@ -30,13 +30,13 @@ let eval e: exp -> int =
   match e with
   | Int i: exp ->> i
   | AddExp (e1, e2): exp ->> (
-    let i1: int = eval e1 in
-    let i2: int = eval e2 in
+    let i1: int = eval (e1: exp) in
+    let i2: int = eval (e2: exp) in
     i1 + i2
   )
   | SubExp (e1, e2): exp ->> (
-    let i1: int = eval e1 in
-    let i2: int = eval e2 in
+    let i1: int = eval (e1: exp) in
+    let i2: int = eval (e2: exp) in
     i1 - i2
   )
 ;;
@@ -59,14 +59,14 @@ let get_float a: rec -> float =
 ;;
 
 let reassemble_rec r: rec -> rec =
-  let i: int = get_int r in
-  let b: bool = get_bool r in
-  let f: float = get_float r in
+  let i: int = get_int (r: rec) in
+  let b: bool = get_bool (r: rec) in
+  let f: float = get_float (r: rec) in
   A (i, b, f)
 ;;
 
 let test_reassemble r: rec -> bool =
-  let r2: rec = reassemble_rec r in
+  let r2: rec = reassemble_rec (r: rec) in
   match (r, r2) with
   | (A(i, b, f), A(i2, b2, f2)): rec * rec ->>
     i = i2 && b = b2 && f = f2

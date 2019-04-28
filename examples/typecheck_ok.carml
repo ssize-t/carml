@@ -14,7 +14,7 @@ let t: (secret(int) * bool) * string = (
 
 let add a b: int -> int -> bool = a < b;;
 
-let tuple_equal t1 t2: int * int -> int * int -> bool =
+let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match (t1, t2) with
   | ((a, b), (a', b')): (int * int) * (int * int) ->> a = a' && b = b'
   | (_, _): (int * int) * (int * int) ->> false
@@ -29,5 +29,5 @@ let username: string = "username";;
 let print_plain s: string -> unit = s; ();;
 let print_secret s: secret(string) -> unit = s; ();;
 
-let u: unit = print_secret password;;
-let u: unit = print_plain username;;
+let u: unit = print_secret (password: secret(string));;
+let u: unit = print_plain (username: string);;

@@ -1,0 +1,20 @@
+let f a: int -> int = a;;
+
+let a: int = f (1: int);;
+let a: int = f (a: int);;
+
+let a: int = (fun a: int -> int ->> a) (1: int);;
+let a: int = (fun a: int -> int ->> a) (a: int);;
+
+let a: int = (fun a: int -> int ->> a)
+  (
+    ((fun a: int -> int ->> a)
+      (
+        (f (a: int))
+      : int
+    ))
+  : int)
+;;
+
+let a: int -> int = (fun a b: int -> int -> int ->> a + b) (1: int);;
+let a: int = (fun a b: int -> int -> int ->> a + b) (1: int) (2: int);;

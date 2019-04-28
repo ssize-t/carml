@@ -33,15 +33,7 @@ let typecheck_propagate (typecheck: 'a -> string option) (e: string option) (nod
   propagate_error e new_e
 
 let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
-  match t, t' with
-  | TFun (t1', t2'), TFun (t1'', t2'') -> (
-    match (match_typ t1' t1'' gamma), (match_typ t2' t2'' gamma) with
-    | Ok e, Ok e' -> Ok (e && e')
-    | Error e, Error e2 -> Error (e ^ "\n" ^ e2)
-    | Error e, _ -> Error e
-    | _, Error e -> Error e
-  )
-  | TTuple t, TTuple t' -> (
+  let rec match_typs (t: typ list) (t': typ list) (gamma: env): (bool, string) result =
     match List.zip t t' with
     | Some tt -> List.fold_left tt ~f:(fun acc (t, t') -> (
       match acc, match_typ t t' gamma with
@@ -50,8 +42,11 @@ let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
       | Error e, Ok _ -> Error e
       | Error e, Error e' -> Error (e ^ "\n" ^ e') 
     )) ~init:(Ok true)
-    | None -> Error "tuple type lengths do not match"
-  )
+    | None -> Error "type lengths do not match"
+  in
+  match t, t' with
+  | TFun t, TFun t' -> match_typs t t' gamma
+  | TTuple t, TTuple t' -> match_typs t t' gamma
   | TRecord t1', TRecord t2' -> (
     match gamma t1' with
     | Some (TConstructor Nullary (_, parent_typ)) when parent_typ = t2' -> Ok true
@@ -185,13 +180,19 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): string option =
   )
 and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
   let rec construct_env (t: typ) (params: string list) (gamma: env): ((env * typ), string) result =
-    match params with
-    | param :: rest -> (
-      match t with
-      | TFun (t', t'') -> construct_env t'' rest (update gamma param (TBinding t'))
-      | t' -> Error "type signature does not match function parameters"
+    match t with
+    | TFun typs -> (
+      (*
+        Below allows partial application
+      *)
+      let supplied_typs = List.sub typs ~len:(List.length params) ~pos:0 in
+      match List.zip supplied_typs params with
+      | None -> Error "number of parameters does not match number of types"
+      | Some typ_params -> Ok (
+        List.fold typ_params ~f:(fun (gamma, _) (typ, param) -> (update gamma param (TBinding typ), typ)) ~init:(gamma, TInt)
+      )
     )
-    | [] -> Ok (gamma, t)
+    | t' -> Error (sprintf "function type expected, found %s" (show_typ t'))
   in
   match expr with
   | L l -> typecheck_literal t l
@@ -264,43 +265,31 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): string option =
     | Error e -> Some e
   )
   | Match (e, match_branches) -> typecheck_match t gamma e match_branches
-  | App (e, params) -> (
-    match e with
-    | Var name -> (
-      match gamma name with
-      | Some (TBinding t') -> (
-        let rec match_params (params: expr list) (typ: typ) =
-          match params, typ with
-          | param :: rest, TFun (t1, t1') -> (
-            let e1 = typecheck_expr t1 gamma param in
-            let e2 = match_params rest t1' in
-            propagate_error e1 e2
-          )
-          | [], t' -> (
-            match match_typ t t' gamma with
-            | Ok true -> None
-            | Ok false -> Some (sprintf "%s does not match %s" (show_typ t) (show_typ t'))
-            | Error e -> Some e
-          )
-          | params, t' -> Some (sprintf "%s is not a function, it cannot be applied" (show_typ t'))
-        in
-        match_params params t'
-      )
-      | Some (TType t') -> Some (sprintf "%s is a type, it cannot be applied" name)
-      | Some (TConstructor t') -> Some (sprintf "%s is a constructor, it cannot be applied" name)
-      | None -> Some (sprintf "%s not found in the current environment" name)
-    )
-    | Fun (pparams, typ, body) -> (
-      match construct_env typ pparams gamma with
-      | Ok (gamma', result_typ) -> (
-        match match_typ result_typ t gamma with
-        | Ok true ->  typecheck_expr result_typ gamma' body
-        | Ok false -> Some (sprintf "%s does not match %s" (show_typ result_typ) (show_typ t))
-        | Error e -> Some e
-      )
-      | Error e -> Some e
-    )
-    | e' -> Some (sprintf "%s is not a function" (show_expr e'))
+  | App (e, param_typs) -> (
+    (*
+      We flatten the function to allow for partial application
+
+      let a: int -> int = (fun (int -> int -> int) ...) (a: int) -> TFun int -> int -> int
+      not
+      let a: int -> int = (fun (int -> int -> int) ...) (a: int) -> TFun (TFun int -> int) -> int
+    *)
+    let _, typs = List.unzip param_typs in
+    let fun_typ = (
+      match t with
+      | TFun return_typs -> TFun (typs @ return_typs)
+      | t -> TFun (typs @ [t])
+    ) in
+    let e1 = typecheck_expr fun_typ gamma e in
+    let e2 = List.fold param_typs ~f:(fun acc (param, typ) -> (
+      let e = typecheck_expr typ gamma param in
+      match acc, e with
+      | Some e, Some e' -> Some (e ^ "\n" ^ e')
+      | Some e, None -> Some e
+      | None, Some e -> Some e
+      | None, None -> None
+    )) ~init:None
+    in
+    propagate_error e1 e2
   )
   | Seq (_, e') -> typecheck_expr t gamma e'
 

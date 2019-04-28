@@ -6,7 +6,7 @@ type typ =
   | TChar
   | TUnit
   (* Mutlivariate functions desugar into currying *)
-  | TFun of typ * typ
+  | TFun of typ list
   | TTuple of typ list
   (* Name * optional constructor *)
   | TRecord of string
@@ -33,7 +33,7 @@ type expr =
   | LetIn of string * typ * expr * expr
   | Fun of string list * typ * expr
   | Match of expr * (match_branch * typ * expr) list
-  | App of expr * expr list
+  | App of expr * (expr * typ) list
   | Seq of expr * expr
 
 and literal =

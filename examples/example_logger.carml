@@ -14,19 +14,19 @@ let log_lvl_to_int lvl: log_lvl -> int =
 ;;
 
 let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
-    let l: int = (log_lvl_to_int lvl) in
+    let l: int = (log_lvl_to_int (lvl: log_lvl)) in
     fun msg lvl': string -> log_lvl -> unit ->>
-        let l': int = (log_lvl_to_int lvl') in
+        let l': int = (log_lvl_to_int (lvl': log_lvl)) in
         match l' >= l with
-        | true: bool ->> (print_string msg)
+        | true: bool ->> (print_string (msg: string))
         | _: bool ->> ()
 ;;
 
 let main: unit =
-    let log: string -> log_lvl -> unit = mk_log 1 in
-    log "debug" Debug;
-    log "info" Info;
-    log "warn" Warn;
-    log "fatal" Fatal;
+    let log: string -> log_lvl -> unit = mk_log (1: int) in
+    log ("debug": string) (Debug: log_lvl);
+    log ("info": string) (Info: log_lvl);
+    log ("warn": string) (Warn: log_lvl);
+    log ("fatal": string) (Fatal: log_lvl);
     ()
 ;;
