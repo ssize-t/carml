@@ -90,7 +90,7 @@ rule micro = parse
   | '*'         { MULT }
   | '/'         { DIV }
 
-  | '\n'        { incr line_num; micro lexbuf }
+  | '\n'        { incr line_num; L.new_line lexbuf; micro lexbuf }
   | blank       { micro lexbuf }
   | _           { syntax_error "couldn't identify the token" }
   | eof         { EOF }
