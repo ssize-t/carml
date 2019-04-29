@@ -6,20 +6,20 @@ type log_lvl =
 ;;
 
 let log_lvl_to_int lvl: log_lvl -> int =
-    match lvl with
-    | Debug: log_lvl ->> 0
-    | Info: log_lvl ->> 1
-    | Warn: log_lvl ->> 2
-    | Fatal: log_lvl ->> 3
+    match (lvl: log_lvl) with
+    | Debug -> 0
+    | Info -> 1
+    | Warn -> 2
+    | Fatal -> 3
 ;;
 
 let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
     let l: int = (log_lvl_to_int (lvl: log_lvl)) in
     fun msg lvl': string -> log_lvl -> unit ->>
         let l': int = (log_lvl_to_int (lvl': log_lvl)) in
-        match l' >= l with
-        | true: bool ->> (print_string (msg: string))
-        | _: bool ->> ()
+        match (l' >= l: bool) with
+        | true -> (print_string (msg: string))
+        | _ -> ()
 ;;
 
 let main: unit =

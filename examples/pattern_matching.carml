@@ -1,23 +1,23 @@
 let fst t: (int * int) -> int =
-  match t with
-  | (h, _): int * int ->> h
+  match (t: int * int) with
+  | (h, _) -> h
 ;;
 
 let snd t: (int * int) -> int =
-  match t with
-  | (_, t): int * int ->> t
+  match (t: int * int) with
+  | (_, t) -> t
 ;;
 
 let head l default: int list -> int -> int =
-  match l with
-  | h :: t: int list ->> h
-  | []: int list ->> default
+  match (l: int list) with
+  | h :: t -> h
+  | [] -> default
 ;;
 
 let length l: int list -> int =
-  match l with
-  | _ :: t: int list ->> 1 + length (t: int list)
-  | []: int list ->> 0
+  match (l: int list) with
+  | _ :: t -> 1 + length (t: int list)
+  | [] -> 0
 ;;
 
 type exp =
@@ -27,52 +27,52 @@ type exp =
 ;;
 
 let eval e: exp -> int =
-  match e with
-  | Int i: exp ->> i
-  | AddExp (e1, e2): exp ->> (
+  match (e: exp) with
+  | Int i -> i
+  | AddExp (e1, e2) -> (
     let i1: int = eval (e1: exp) in
     let i2: int = eval (e2: exp) in
     i1 + i2
   )
-  | SubExp (e1, e2): exp ->> (
+  | SubExp (e1, e2) -> (
     let i1: int = eval (e1: exp) in
     let i2: int = eval (e2: exp) in
     i1 - i2
   )
 ;;
 
-type rec = A of int * bool * float;;
+type record = A of int * bool * float;;
 
-let get_int a: rec -> int =
-  match a with
-  | A (i, _, _): rec ->> i
+let get_int a: record -> int =
+  match (a: record) with
+  | A (i, _, _) -> i
 ;;
 
-let get_bool a: rec -> bool =
-  match a with
-  | A (_, b, _): rec ->> b
+let get_bool a: record -> bool =
+  match (a: record) with
+  | A (_, b, _) -> b
 ;;
 
-let get_float a: rec -> float =
-  match a with
-  | A (_, _, f): rec ->> f
+let get_float a: record -> float =
+  match (a: record) with
+  | A (_, _, f) -> f
 ;;
 
-let reassemble_rec r: rec -> rec =
-  let i: int = get_int (r: rec) in
-  let b: bool = get_bool (r: rec) in
-  let f: float = get_float (r: rec) in
+let reassemble_record r: record -> record =
+  let i: int = get_int (r: record) in
+  let b: bool = get_bool (r: record) in
+  let f: float = get_float (r: record) in
   A (i, b, f)
 ;;
 
-let test_reassemble r: rec -> bool =
-  let r2: rec = reassemble_rec (r: rec) in
-  match (r, r2) with
-  | (A(i, b, f), A(i2, b2, f2)): rec * rec ->>
+let test_reassemble r: record -> bool =
+  let r2: record = reassemble_record (r: record) in
+  match ((r, r2): record * record) with
+  | (A(i, b, f), A(i2, b2, f2)) ->
     i = i2 && b = b2 && f = f2
 ;;
 
 let deeply_nested_match t: test -> bool =
-  match t with
-  | ((h :: t, _ :: A (_, b, _) :: _), _): (int list * rec list) * int ->> b = h
+  match (t: int list * record list) with
+  | ((h :: t, _ :: A (_, b, _) :: _), _) -> b = h
 ;;

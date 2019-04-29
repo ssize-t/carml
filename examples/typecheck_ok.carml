@@ -15,9 +15,9 @@ let t: (secret(int) * bool) * string = (
 let add a b: int -> int -> bool = a < b;;
 
 let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
-  match (t1, t2) with
-  | ((a, b), (a', b')): (int * int) * (int * int) ->> a = a' && b = b'
-  | (_, _): (int * int) * (int * int) ->> false
+  match ((t1, t2): (int * int) * (int * int)) with
+  | ((a, b), (a', b')) -> a = a' && b = b'
+  | (_, _) -> false
 ;;
 
 let t: int * int * int = (1, 2, 3);;
@@ -33,27 +33,34 @@ let u: unit = print_secret (password: secret(string));;
 let u: unit = print_plain (username: string);;
 
 let rec length l: int list -> int =
-  match l with
-  | _ :: t: int list ->> 1 + (length (t: int list))
-  | []: int list ->> 0
+  match (l: int list) with
+  | _ :: t -> 1 + (length (t: int list))
+  | [] -> 0
 ;;
 
+
+(*
+Below is incorrect, need @ operator
 let rec rev l: int list -> int list =
   match l with
   | h :: t: int list ->> (rev (t: int list)) :: ([h])
   | []: int list ->> []
 ;;
+*)
 
 let rec length: int list -> int =
-  fun l: int list -> int list ->>
-  match l with
-  | _ :: t: int list ->> 1 + (length (t: int list))
-  | []: int list ->> 0
+  fun l: int list -> int ->>
+  match (l: int list) with
+  | _ :: t -> 1 + (length (t: int list))
+  | [] -> 0
 ;;
 
+(*
+Below is incorrect, need @ operator
 let rec rev: int list -> int list =
   fun l: int list -> int list ->>
   match l with
   | h :: t: int list ->> (rev (t: int list)) :: ([h])
   | []: int list ->> []
 ;;
+*)

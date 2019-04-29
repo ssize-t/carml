@@ -1,28 +1,28 @@
 
 let length l: int list -> int =
-  match l with
-  | _ :: t: int list ->> 1 + (length (l: int list))
-  | []: int list ->> 0
+  match (l: int list) with
+  | _ :: t -> 1 + (length (l: int list))
+  | [] -> 0
 ;;
 
 let zip l1 l2: int list -> int list -> (int * int) list =
-  match (l1, l2) with
-  | (h::t, h'::t'): int list * int list ->> (h, h') :: (zip (t: int list) (t': int list))
-  | ([], []): int list * int list ->> []
+  match ((l1, l2): int list * int list) with
+  | (h::t, h'::t') -> (h, h') :: (zip (t: int list) (t': int list))
+  | ([], []) -> []
 ;;
 
 let map l f: int list -> int -> bool -> bool list =
-  match l with
-  | h :: t: int list ->> (f (h: int)) :: (map (t: int list) (f: int -> bool))
-  | []: int list ->> []
+  match (l: int list) with
+  | h :: t -> (f (h: int)) :: (map (t: int list) (f: int -> bool))
+  | [] -> []
 ;;
 
 let l2: bool list = map (([1; 2; 3]): int list) ((fun f: int -> bool ->> true): int -> bool);;
 
 let _reverse l acc: int list -> int list -> int list =
-  match l with
-  | h :: t: int list ->> _reverse (t: int list) ((h :: acc): int list)
-  | []: int list ->> acc
+  match (l: int list) with
+  | h :: t -> _reverse (t: int list) ((h :: acc): int list)
+  | [] -> acc
 ;;
 
 let reverse l: int list -> int list = _reverse (l: int list) (([]): int list);;

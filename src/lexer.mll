@@ -99,6 +99,7 @@ rule micro = parse
 and comment =
   parse
   | "*)"        { micro lexbuf }
+  | '\n'        { L.new_line lexbuf; comment lexbuf }
   | _           { comment lexbuf }
 and read_string buf =
   parse

@@ -92,7 +92,7 @@ expression:
 | LET VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetIn (p.Lexing.pos_lnum, $2, $4, $6, $8) }
 | LET REC VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetRecIn (p.Lexing.pos_lnum, $3, $5, $7, $9) }
 | FUN params COLON styp DOUBLE_ARROW expression { let p = $symbolstartpos in Fun (p.Lexing.pos_lnum, $2, $4, $6) }
-| MATCH primary_expression WITH match_branches { let p = $symbolstartpos in Match (p.Lexing.pos_lnum, $2, $4) }
+| MATCH LPAREN primary_expression COLON styp RPAREN WITH match_branches { let p = $symbolstartpos in Match (p.Lexing.pos_lnum, $3, $5, $8) }
 ;
 
 primary_expression:
@@ -150,7 +150,7 @@ match_branches:
 ;
 
 match_branch:
-| primary_match_branch COLON styp DOUBLE_ARROW primary_expression { ($1, $3, $5) }
+| primary_match_branch ARROW primary_expression { ($1, $3) }
 ;
 
 primary_match_branch:

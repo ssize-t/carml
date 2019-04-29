@@ -53,7 +53,7 @@ type expr =
   | LetIn of loc * string * typ * expr * expr
   | LetRecIn of loc * string * typ * expr * expr
   | Fun of loc * string list * typ * expr
-  | Match of loc * expr * (match_branch * typ * expr) list
+  | Match of loc * expr * typ * (match_branch * expr) list
   | App of loc * expr * (expr * typ) list
   | Seq of loc * expr * expr
 

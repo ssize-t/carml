@@ -93,10 +93,10 @@ let rec typecheck_literal (t: typ) (l: literal): err option =
   | l', TSecret (_, t') -> typecheck_literal t' l'
   | l', t' -> Some (TypeError ((typ_loc t'), (sprintf "Expected type %s, found %s" (pretty_typ t') (show_literal l'))))
 
-let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_branch * typ * expr) list): err list option =
+let rec typecheck_match (t: typ) (expr_typ: typ) (gamma: env) (e: expr) (match_branches: (match_branch * expr) list): err list option =
   match match_branches with
   | [] -> None
-  | (branch, branch_typ, branch_expr) :: rest -> (
+  | (branch, branch_expr) :: rest -> (
     let rec match_typ_shape (branch: match_branch) (branch_typ: typ) (gamma: env): (env, err) result =
       let rec match_typ_shapes (branches: match_branch list) (branch_typs: typ list) (gamma: env): (env, string) result =
         let branch_typs = List.zip branches branch_typs in
@@ -155,16 +155,16 @@ let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_
       )
       | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (pretty_typ t'))))
     in
-    match match_typ_shape branch branch_typ gamma with
+    match match_typ_shape branch expr_typ gamma with
     | Error err -> (
-      let rest_e = typecheck_match t gamma e rest in
+      let rest_e = typecheck_match t expr_typ gamma e rest in
       propagate_error (Some [err]) rest_e
     )
     | Ok gamma' -> (
-      let e1 = typecheck_expr branch_typ gamma e in
+      let e1 = typecheck_expr expr_typ gamma e in
       let e2 = typecheck_expr t gamma' branch_expr in
       let branch_e = propagate_error e1 e2 in
-      let rest_e = typecheck_match t gamma e rest in
+      let rest_e = typecheck_match t expr_typ gamma e rest in
       propagate_error branch_e rest_e
     )
   )
@@ -204,6 +204,7 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): err list option =
   | List (loc, body) -> (
     match t with
     | TList (loc, t') -> List.fold body ~f:(typecheck_propagate (typecheck_expr t' gamma)) ~init:None
+    (* Explicit type annotation in list operations? *)
     | t' -> Some [TypeError (loc, sprintf "expected list, found %s" (pretty_typ t'))]
   )
 and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
@@ -312,7 +313,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     )
     | Error e -> Some [e]
   )
-  | Match (loc, e, match_branches) -> typecheck_match t gamma e match_branches
+  | Match (loc, e, typ, match_branches) -> typecheck_match t typ gamma e match_branches
   | App (loc, e, param_typs) -> (
     (*
       We flatten the function to allow for partial application
