@@ -90,10 +90,16 @@ rule micro = parse
   | '*'         { MULT }
   | '/'         { DIV }
 
+  | "(*"        { comment lexbuf }
+
   | '\n'        { incr line_num; L.new_line lexbuf; micro lexbuf }
   | blank       { micro lexbuf }
   | _           { syntax_error "couldn't identify the token" }
   | eof         { EOF }
+and comment =
+  parse
+  | "*)"        { micro lexbuf }
+  | _           { comment lexbuf }
 and read_string buf =
   parse
   | '"'       { Buffer.contents buf }
