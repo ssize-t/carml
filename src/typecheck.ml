@@ -144,10 +144,14 @@ let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_
         | None -> Error (TypeError (loc, (sprintf "Name %s not found in current environment" constructor)))
       )
       | MList (loc, branches), TList (loc', t') -> (
-        let branch_typs = List.init (List.length branches) ~f:(fun _ -> t') in
-        match match_typ_shapes branches branch_typs gamma with
-        | Ok gamma' -> Ok gamma'
-        | Error e -> Error (TypeError (loc, sprintf "Expected list of type %s: %s" (pretty_typ t') e))
+        match List.length branches with
+        | 0 -> Ok gamma
+        | l -> (
+          let branch_typs = (List.init (l-1) ~f:(fun _ -> t')) @ [TList (loc, t')] in
+          match match_typ_shapes branches branch_typs gamma with
+          | Ok gamma' -> Ok gamma'
+          | Error e -> Error (TypeError (loc, sprintf "Expected list of type %s: %s" (pretty_typ t') e))
+        )
       )
       | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (pretty_typ t'))))
     in
