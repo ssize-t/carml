@@ -91,7 +91,7 @@ let rec typecheck_literal (t: typ) (l: literal): err option =
   | Char (_, _), TChar _ -> None
   | Bool (_, _), TBool _ -> None
   | l', TSecret (_, t') -> typecheck_literal t' l'
-  | l', t' -> Some (TypeError ((typ_loc t'), (sprintf "Expected type %s, found %s" (show_typ t') (show_literal l'))))
+  | l', t' -> Some (TypeError ((typ_loc t'), (sprintf "Expected type %s, found %s" (pretty_typ t') (show_literal l'))))
 
 let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_branch * typ * expr) list): err list option =
   match match_branches with
@@ -147,9 +147,9 @@ let rec typecheck_match (t: typ) (gamma: env) (e: expr) (match_branches: (match_
         let branch_typs = List.init (List.length branches) ~f:(fun _ -> t') in
         match match_typ_shapes branches branch_typs gamma with
         | Ok gamma' -> Ok gamma'
-        | Error e -> Error (TypeError (loc, sprintf "Expected list of type %s: %s" (show_typ t') e))
+        | Error e -> Error (TypeError (loc, sprintf "Expected list of type %s: %s" (pretty_typ t') e))
       )
-      | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (show_typ t'))))
+      | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (pretty_typ t'))))
     in
     match match_typ_shape branch branch_typ gamma with
     | Error err -> (
@@ -174,9 +174,9 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): err list option =
       | Some expr_typs -> (
         List.fold expr_typs ~f:(fun acc (e, t) -> typecheck_propagate (typecheck_expr t gamma) acc e) ~init:None
       )
-      | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (show_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple (loc, e)))))))]
+      | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (pretty_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple (loc, e)))))))]
     )
-    | t' -> Some [TypeError (loc, sprintf "Expected tuple, found %s" (show_typ t'))]
+    | t' -> Some [TypeError (loc, sprintf "Expected tuple, found %s" (pretty_typ t'))]
   )
   | Record (loc, constructor, params) -> (
     match gamma constructor with
@@ -200,7 +200,7 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): err list option =
   | List (loc, body) -> (
     match t with
     | TList (loc, t') -> List.fold body ~f:(typecheck_propagate (typecheck_expr t' gamma)) ~init:None
-    | t' -> Some [TypeError (loc, sprintf "expected list, found %s" (show_typ t'))]
+    | t' -> Some [TypeError (loc, sprintf "expected list, found %s" (pretty_typ t'))]
   )
 and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
   let rec construct_env (t: typ) (params: string list) (gamma: env): ((env * typ), err) result =
@@ -221,7 +221,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
         )
       )
     )
-    | t' -> Error (TypeError ((typ_loc t'), sprintf "function type expected, found %s" (show_typ t')))
+    | t' -> Error (TypeError ((typ_loc t'), sprintf "function type expected, found %s" (pretty_typ t')))
   in
   match expr with
   | L (_, l) -> (
@@ -233,7 +233,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
   | UnOp (loc, op, e) -> (
     match t with
     | TBool loc' -> typecheck_expr (TBool loc') gamma e
-    | t' -> Some [(TypeError ((typ_loc t'), sprintf "attempted to assign the result of a unary expression to type %s, expected %s" (show_typ t') (show_typ (TBool loc))))]
+    | t' -> Some [(TypeError ((typ_loc t'), sprintf "attempted to assign the result of a unary expression to type %s, expected %s" (pretty_typ t') (pretty_typ (TBool loc))))]
   )
   | BinOp (loc, op, e1, e2) -> (
     match op, t with
@@ -258,7 +258,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
       let e2' = typecheck_expr (TBool loc') gamma e2 in
       propagate_error e1' e2'
     )
-    | op', t -> Some [(TypeError (loc, (sprintf "attempted to assign the result of a binary expression to type %s, expected %s" (show_typ t) (show_typ (TBool loc)))))]
+    | op', t -> Some [(TypeError (loc, (sprintf "attempted to assign the result of a binary expression to type %s, expected %s" (pretty_typ t) (pretty_typ (TBool loc)))))]
   )
   | NumOp (loc, op, e1, e2) -> (
     match t with
@@ -272,7 +272,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
       let e2' = typecheck_expr (TFloat loc') gamma e2 in
       propagate_error e1' e2'
     )
-    | t' -> Some [(TypeError (loc, sprintf "attempted to assign the result of an arithmetic expression to type %s, %s or %s expected" (show_typ t') (show_typ (TInt loc)) (show_typ (TFloat loc))))]
+    | t' -> Some [(TypeError (loc, sprintf "attempted to assign the result of an arithmetic expression to type %s, %s or %s expected" (pretty_typ t') (pretty_typ (TInt loc)) (pretty_typ (TFloat loc))))]
   )
   | Var (loc, name) -> (
     match gamma name with
@@ -280,7 +280,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     | Some (TBinding t') -> (
       match match_typ t t' gamma with
       | Ok true -> None
-      | Ok false -> Some [(TypeError (loc, (sprintf "Type of variable %s (%s) does not match required %s" name (show_typ t') (show_typ t))))]
+      | Ok false -> Some [(TypeError (loc, (sprintf "Type of variable %s (%s) does not match required %s" name (pretty_typ t') (pretty_typ t))))]
       | Error e -> Some [(TypeError (loc, e))]
     )
     | Some (TType t) -> Some [TypeError (loc, sprintf "Name %s refers to a type, it cannot be used in this context" name)]
@@ -303,7 +303,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     | Ok (gamma', result_typ) -> (
       match match_typ typ t gamma with
       | Ok true ->  typecheck_expr result_typ gamma' body
-      | Ok false -> Some [TypeError (loc, sprintf "%s does not match %s" (show_typ typ) (show_typ t))]
+      | Ok false -> Some [TypeError (loc, sprintf "%s does not match %s" (pretty_typ typ) (pretty_typ t))]
       | Error e -> Some [TypeError (loc, e)]
     )
     | Error e -> Some [e]

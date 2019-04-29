@@ -1,3 +1,5 @@
+open Core
+
 type loc = int
 [@@deriving show]
 
@@ -16,6 +18,21 @@ type typ =
   | TList of loc * typ
   | TSecret of loc * typ
 [@@deriving show]
+
+let rec pretty_typ (t: typ): string =
+  match t with
+  | TInt _ -> "int"
+  | TFloat _ -> "float"
+  | TBool _ -> "bool"
+  | TChar _ -> "char"
+  | TUnit _ -> "unit"
+  | TString _ -> "string"
+  | TFun (_, typs) -> String.concat (List.map typs ~f:pretty_typ) ~sep:" -> "
+  | TTuple (_, typs) -> String.concat (List.map typs ~f:pretty_typ) ~sep:" * "
+  | TRecord (_, constructor) -> constructor
+  | TList (_, t') -> sprintf "%s list" (pretty_typ t')
+  | TSecret (_, t') -> sprintf "secret(%s)" (pretty_typ t')
+  
 
 type binop = Lt | Lte | Eq | Gt | Gte | Neq | And | Or
 [@@deriving show]
