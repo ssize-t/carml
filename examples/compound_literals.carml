@@ -6,6 +6,9 @@ let t: (int * int) * int = ((1234, 1234), 1234);;
 let t2: int * (int * int) = ((1234, 1234), 1234);;
 let t3: (int * int) * (int * int) = ((1234, 1234), (1234, 1234));;
 
+let l: int list = 1 :: [];;
+let l: int list = 1 :: 2 :: 3 :: [];;
+
 let l: int list = [1234; 1234; 1234];;
 let l2: int list = [];;
 

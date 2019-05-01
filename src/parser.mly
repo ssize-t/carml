@@ -30,11 +30,13 @@ open Ast
 %token LET IN FUN REC
 
 %token LPAREN RPAREN
-%token COMMA COLON DOUBLE_COLON
+%token COMMA COLON DOUBLE_COLON AT
 
 %token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE DOUBLE_SEMI
 
 %token EOF
+
+%right DOUBLE_COLON
 
 %left AND OR
 %right EQ NEQ
@@ -42,8 +44,6 @@ open Ast
 %left ADD SUB
 %left MULT DIV
 %left NOT
-
-%right DOUBLE_COLON
 
 %start program
 %type <Ast.program> program
@@ -118,8 +118,8 @@ applicative_expression:
 applicable_expression:
 | simple_expression { $1 }
 /* Below is not great */
-| TYPE_IDENT { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Record (p.Lexing.pos_lnum, $1, []))) }
-| LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Tuple (p.Lexing.pos_lnum, $2 :: $4))) }
+| TYPE_IDENT { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Record ($1, []))) }
+| LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Tuple ($2 :: $4))) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
@@ -132,16 +132,17 @@ complex_expression:
 | binop { $1 }
 | numop { $1 }
 | unop { $1 }
+| LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
 | complex_literal { let p = $symbolstartpos in C (p.Lexing.pos_lnum, $1) }
 ;
 
 literal:
-| UNIT { let p = $symbolstartpos in Unit p.Lexing.pos_lnum }
-| INT { let p = $symbolstartpos in Int (p.Lexing.pos_lnum, $1) }
-| FLOAT { let p = $symbolstartpos in Float (p.Lexing.pos_lnum, $1) }
-| STRING { let p = $symbolstartpos in String (p.Lexing.pos_lnum, $1) }
-| CHAR { let p = $symbolstartpos in Char (p.Lexing.pos_lnum, $1) }
-| BOOL { let p = $symbolstartpos in Bool (p.Lexing.pos_lnum, $1) }
+| UNIT { Unit }
+| INT { Int $1 }
+| FLOAT { Float $1 }
+| STRING { String $1 }
+| CHAR { Char $1 }
+| BOOL { Bool $1 }
 ;
 
 match_branches:
@@ -169,11 +170,8 @@ compund_branch:
 | LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MTuple (p.Lexing.pos_lnum, $2) }
 | TYPE_IDENT simple_branch { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, [$2]) }
 | TYPE_IDENT LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, $3) }
-| LBRACKET RBRACKET { let p = $symbolstartpos in MList (p.Lexing.pos_lnum, []) }
-| LBRACKET semi_sep_match_branch RBRACKET { let p = $symbolstartpos in MList (p.Lexing.pos_lnum, $2) }
-/* Flatten me before use */
-/* TODO fix below */
-| primary_match_branch DOUBLE_COLON primary_match_branch { let p = $symbolstartpos in MList (p.Lexing.pos_lnum, [$1; $3]) }
+| LBRACKET RBRACKET { let p =  $symbolstartpos in MNil p.Lexing.pos_lnum }
+| primary_match_branch DOUBLE_COLON primary_match_branch { let p = $symbolstartpos in MCons (p.Lexing.pos_lnum, $1, $3) }
 ;
 
 comma_sep_match_branch:
@@ -181,19 +179,13 @@ comma_sep_match_branch:
 | primary_match_branch COMMA comma_sep_match_branch { $1 :: $3 }
 ;
 
-semi_sep_match_branch:
-| primary_match_branch { [$1] }
-| primary_match_branch SEMI semi_sep_match_branch { $1 :: $3 }
-;
-
 complex_literal:
-| LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in Tuple (p.Lexing.pos_lnum, $2 :: $4) }
-| TYPE_IDENT { let p = $symbolstartpos in Record (p.Lexing.pos_lnum, $1, []) }
-| TYPE_IDENT LPAREN comma_sep_expr RPAREN { let p = $symbolstartpos in Record (p.Lexing.pos_lnum, $1, $3) }
-| LBRACKET RBRACKET { let p = $symbolstartpos in List (p.Lexing.pos_lnum, []) }
-| LBRACKET semi_sep_primary_expr  RBRACKET { let p = $symbolstartpos in List (p.Lexing.pos_lnum, $2) }
-/* Beware of nesting per https://caml.inria.fr/pub/docs/tutorial-camlp4/tutorial005.html */
-| applicable_expression DOUBLE_COLON applicable_expression { let p = $symbolstartpos in List (p.Lexing.pos_lnum, [$1; $3]) }
+| LPAREN expression COMMA comma_sep_expr RPAREN { Tuple ($2 :: $4) }
+| TYPE_IDENT { Record ($1, []) }
+| TYPE_IDENT LPAREN comma_sep_expr RPAREN { Record ($1, $3) }
+| LBRACKET RBRACKET { Nil }
+| primary_expression DOUBLE_COLON primary_expression { Cons ($1, $3) }
+/* | applicable_expression AT applicable_expression { let p = $symbolstartpos in List (p.Lexing.pos_lnum; )} */
 ;
 
 unop:
@@ -224,8 +216,8 @@ comma_sep_expr:
 ;
 
 semi_sep_primary_expr:
-| primary_expression { [$1] }
-| primary_expression SEMI semi_sep_primary_expr { $1 :: $3 }
+| primary_expression { let p = $symbolstartpos in C (p.Lexing.pos_lnum, Cons ($1, C (p.Lexing.pos_lnum, Nil))) }
+| primary_expression SEMI semi_sep_primary_expr { let p = $symbolstartpos in C (p.Lexing.pos_lnum, Cons ($1, $3)) }
 ;
 
 params:

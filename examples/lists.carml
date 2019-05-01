@@ -1,0 +1,24 @@
+(* Lists can be constructed explicitly using the cons :: operator *)
+let l: int list = 1 :: 2 :: 3 :: 4 :: [];;
+(* Or as a sequence wrapped in brackets, separated by ; *)
+let l: int list = [1; 2; 3; 4];;
+
+(* Lists must be of a uniform type *)
+let l2: (int * int) list = (1, 2) :: (3, 4) :: [];;
+let l3: (int * int) list = (1, 2) :: (3, 4) :: [];;
+
+(* Lists can contain any expression *)
+let add1 a: int -> int = a + 1;; 
+let l4: (int -> int) list = add1 :: (fun a: int -> int ->> a) :: [];;
+
+(* Pattern matching on lists uses the cons operator *)
+let hd: int = match (l: int list) with | h :: t -> h | [] -> 0;;
+
+let rec unzip l: (int * int) list -> (int list * int list) =
+  match (l: (int * int) list) with
+  | (a, b) :: t -> (
+    match ((unzip (t: (int * int) list)): (int list * int list)) with
+    | (t1', t2') -> (a::t1', b::t2')
+  )
+  | [] -> ([], [])
+;;

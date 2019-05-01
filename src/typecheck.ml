@@ -84,12 +84,12 @@ let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
 
 let rec typecheck_literal (t: typ) (l: literal): err option =
   match l, t with
-  | Unit _, TUnit _ -> None
-  | Int (_, _), TInt _ -> None
-  | Float (_, _), TFloat _ -> None
-  | String (_, _), TString _ -> None
-  | Char (_, _), TChar _ -> None
-  | Bool (_, _), TBool _ -> None
+  | Unit, TUnit _ -> None
+  | Int _, TInt _ -> None
+  | Float _, TFloat _ -> None
+  | String _, TString _ -> None
+  | Char _, TChar _ -> None
+  | Bool _, TBool _ -> None
   | l', TSecret (_, t') -> typecheck_literal t' l'
   | l', t' -> Some (TypeError ((typ_loc t'), (sprintf "Expected type %s, found %s" (pretty_typ t') (show_literal l'))))
 
@@ -143,14 +143,13 @@ let rec typecheck_match (t: typ) (expr_typ: typ) (gamma: env) (e: expr) (match_b
         | Some (TType t) -> Error (TypeError (loc, (sprintf "Name %s refers to a type, not a constructor" constructor)))
         | None -> Error (TypeError (loc, (sprintf "Name %s not found in current environment" constructor)))
       )
-      | MList (loc, branches), TList (loc', t') -> (
-        match List.length branches with
-        | 0 -> Ok gamma
-        | l -> (
-          let branch_typs = (List.init (l-1) ~f:(fun _ -> t')) @ [TList (loc, t')] in
-          match match_typ_shapes branches branch_typs gamma with
-          | Ok gamma' -> Ok gamma'
-          | Error e -> Error (TypeError (loc, sprintf "Expected list of type %s: %s" (pretty_typ t') e))
+      | MNil _, TList (_, _) -> Ok gamma
+      | MCons (loc, mb1, MNil _), TList (loc', t') -> match_typ_shape mb1 (TList (loc', t')) gamma
+      | MCons (loc, mb1, mb2), TList (loc', t') -> (
+        match match_typ_shape mb1 t' gamma with
+        | Error e -> Error e
+        | Ok gamma' -> (
+          match_typ_shape mb2 (TList (loc', t')) gamma'
         )
       )
       | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (pretty_typ t'))))
@@ -168,21 +167,21 @@ let rec typecheck_match (t: typ) (expr_typ: typ) (gamma: env) (e: expr) (match_b
       propagate_error branch_e rest_e
     )
   )
-and typecheck_complex (t: typ) (gamma: env) (c: complex): err list option =
+and typecheck_complex (t: typ) (gamma: env) (c: complex) (loc: loc): err list option =
   match c with
-  | Tuple (loc, params) when List.length params < 2 -> Some [TypeError (loc, sprintf "A tuple must have at least two members")]
-  | Tuple (loc, e) -> (
+  | Tuple params when List.length params < 2 -> Some [TypeError (loc, sprintf "A tuple must have at least two members")]
+  | Tuple e -> (
     match t with
     | TTuple (loc, t) -> (
       match List.zip e t with
       | Some expr_typs -> (
         List.fold expr_typs ~f:(fun acc (e, t) -> typecheck_propagate (typecheck_expr t gamma) acc e) ~init:None
       )
-      | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (pretty_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple (loc, e)))))))]
+      | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (pretty_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple e))))))]
     )
     | t' -> Some [TypeError (loc, sprintf "Expected tuple, found %s" (pretty_typ t'))]
   )
-  | Record (loc, constructor, params) -> (
+  | Record (constructor, params) -> (
     match gamma constructor with
     | Some (TConstructor (Nullary (c', _))) -> (
       match params with
@@ -201,11 +200,19 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex): err list option =
     | Some (TBinding _) -> Some [TypeError (loc, (sprintf "Name %s refers to a binding, not a constructor" constructor))]
     | None -> Some [TypeError (loc, (sprintf "Name %s not found in current environment" constructor))]
   )
-  | List (loc, body) -> (
+  | Nil -> (
     match t with
-    | TList (loc, t') -> List.fold body ~f:(typecheck_propagate (typecheck_expr t' gamma)) ~init:None
-    (* Explicit type annotation in list operations? *)
-    | t' -> Some [TypeError (loc, sprintf "expected list, found %s" (pretty_typ t'))]
+    | TList (_, _) -> None
+    | t' -> Some [TypeError ((typ_loc t'), (sprintf "List expected, %s found" (pretty_typ t')))]
+  )
+  | Cons (e1, e2) -> (
+    match t with
+    | TList (loc, t') -> (
+      let e1 = typecheck_expr t' gamma e1 in
+      let e2 = typecheck_expr (TList (loc, t')) gamma e2 in
+      propagate_error e1 e2
+    )
+    | t' -> Some [TypeError ((typ_loc t'), (sprintf "List expected, %s found" (pretty_typ t')))]
   )
 and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
   let rec construct_env (t: typ) (params: string list) (gamma: env): ((env * typ), err) result =
@@ -234,7 +241,7 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     | None -> None
     | Some e -> Some [e]
   )
-  | C (_, c) -> typecheck_complex t gamma c
+  | C (loc, c) -> typecheck_complex t gamma c loc
   | UnOp (loc, op, e) -> (
     match t with
     | TBool loc' -> typecheck_expr (TBool loc') gamma e

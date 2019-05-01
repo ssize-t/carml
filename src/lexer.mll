@@ -49,6 +49,7 @@ rule micro = parse
 
   | ':'         { COLON }
   | "::"        { DOUBLE_COLON }
+  | '@'         { AT }
   | ";;"        { DOUBLE_SEMI }
   | ';'         { SEMI }
 

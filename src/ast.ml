@@ -10,10 +10,8 @@ type typ =
   | TString of loc
   | TChar of loc
   | TUnit of loc
-  (* Mutlivariate functions desugar into currying *)
   | TFun of loc * typ list
   | TTuple of loc * typ list
-  (* Name * optional constructor *)
   | TRecord of loc * string
   | TList of loc * typ
   | TSecret of loc * typ
@@ -59,19 +57,18 @@ type expr =
 
 and literal =
   (* Simple literals *)
-  | Unit of loc
-  | Int of loc * int
-  | Float of loc * float
-  | String of loc * string
-  | Char of loc * char
-  | Bool of loc * bool
+  | Unit
+  | Int of int
+  | Float of float
+  | String of string
+  | Char of char
+  | Bool of bool
 
 and complex =
-  (* Complex literals *)
-  | Tuple of loc * expr list
-  (* Inductive type name * constructor values *)
-  | Record of loc * string * expr list
-  | List of loc * expr list
+  | Tuple of expr list
+  | Record of string * expr list
+  | Nil
+  | Cons of expr * expr
 
 and match_branch =
   | ML of loc * literal
@@ -80,7 +77,8 @@ and match_branch =
   (* Simplify complex types for binding *)
   | MTuple of loc * match_branch list
   | MRecord of loc * string * match_branch list
-  | MList of loc * match_branch list
+  | MNil of loc
+  | MCons of loc * match_branch * match_branch
 [@@deriving show]
 
 type stmt =
