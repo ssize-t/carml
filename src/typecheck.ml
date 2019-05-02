@@ -286,6 +286,15 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     )
     | t' -> Some [(TypeError (loc, sprintf "attempted to assign the result of an arithmetic expression to type %s, %s or %s expected" (pretty_typ t') (pretty_typ (TInt loc)) (pretty_typ (TFloat loc))))]
   )
+  | ListOp (loc, op, e1, e2) -> (
+    match t with
+    | TList (loc', t') -> (
+      let e1' = typecheck_expr (TList (loc', t')) gamma e1 in
+      let e2' = typecheck_expr (TList (loc', t')) gamma e2 in
+      propagate_error e1' e2'
+    )
+    | t' -> Some [(TypeError (loc, sprintf "attempted to assign the result of a list operator expression (%s) to type %s, list type expected" (pretty_list_op op) (pretty_typ t')))]
+  )
   | Var (loc, name) -> (
     match gamma name with
     | None -> Some [(TypeError (loc, sprintf "Name %s not found in current environment" name))]

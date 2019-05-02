@@ -22,3 +22,7 @@ let rec unzip l: (int * int) list -> (int list * int list) =
   )
   | [] -> ([], [])
 ;;
+
+(* List operators *)
+(* Concatenation *)
+let l: int list = (1 :: 2 :: []) @ [3; 4];;

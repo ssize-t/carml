@@ -36,7 +36,7 @@ open Ast
 
 %token EOF
 
-%right DOUBLE_COLON
+%right DOUBLE_COLON AT
 
 %left AND OR
 %right EQ NEQ
@@ -132,6 +132,7 @@ complex_expression:
 | binop { $1 }
 | numop { $1 }
 | unop { $1 }
+| listop { $1 }
 | LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
 | complex_literal { let p = $symbolstartpos in C (p.Lexing.pos_lnum, $1) }
 ;
@@ -185,11 +186,14 @@ complex_literal:
 | TYPE_IDENT LPAREN comma_sep_expr RPAREN { Record ($1, $3) }
 | LBRACKET RBRACKET { Nil }
 | primary_expression DOUBLE_COLON primary_expression { Cons ($1, $3) }
-/* | applicable_expression AT applicable_expression { let p = $symbolstartpos in List (p.Lexing.pos_lnum; )} */
 ;
 
 unop:
 | NOT primary_expression { let p = $symbolstartpos in UnOp (p.Lexing.pos_lnum, Not, $2) }
+;
+
+listop:
+| primary_expression AT primary_expression { let p = $symbolstartpos in ListOp (p.Lexing.pos_lnum, Concat, $1, $3)}
 ;
 
 binop:

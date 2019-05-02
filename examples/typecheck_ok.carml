@@ -38,15 +38,12 @@ let rec length l: int list -> int =
   | [] -> 0
 ;;
 
-
-(*
-Below is incorrect, need @ operator
 let rec rev l: int list -> int list =
-  match l with
-  | h :: t: int list ->> (rev (t: int list)) :: ([h])
-  | []: int list ->> []
+  match (l: int list) with
+  | h :: t -> (rev (t: int list)) @ ([h])
+  | [] -> []
 ;;
-*)
+
 
 let rec length: int list -> int =
   fun l: int list -> int ->>
@@ -54,13 +51,3 @@ let rec length: int list -> int =
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
 ;;
-
-(*
-Below is incorrect, need @ operator
-let rec rev: int list -> int list =
-  fun l: int list -> int list ->>
-  match l with
-  | h :: t: int list ->> (rev (t: int list)) :: ([h])
-  | []: int list ->> []
-;;
-*)

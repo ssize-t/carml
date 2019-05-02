@@ -60,7 +60,7 @@ let length l: int list -> int =
 
 let rev l: int list -> int list =
   match (l: int list) with
-  | h :: t -> (rev (t: int list)) :: ([h])
+  | h :: t -> (rev (t: int list)) @ ([h])
   | [] -> []
 ;;
 
@@ -74,6 +74,6 @@ let length: int list -> int =
 let rev: int list -> int list =
   fun l: int list -> int list ->>
   match (l: int list) with
-  | h :: t -> (rev (t: int list)) :: ([h])
+  | h :: t -> (rev (t: int list)) @ ([h])
   | [] -> []
 ;;
