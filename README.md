@@ -60,6 +60,7 @@ The program is a series of statements separated by double semicolons (`;;`). Eve
 ### Expressions
 * binary expressions (as you would expect, `> >= = < <= != !`)
 * numeric expressions (as you would expect, `+ - * /`)
+* list operators (`@`)
 * let-in binding -- `let ident: type = expression in expression`
 * sequencing -- `expression; expression`
 
@@ -85,10 +86,10 @@ let b: int -> bool = (fun gt a b: int -> int ->> a > b) (1: int);;
 ```
 
 #### Pattern matching
-Each branch of a match expression requires a separate type annotation, to disambiguate a function type (single arrow), the match expression uses the double arrow, like the function expression.
+The match expression requires an explicit type annotation.
 ```
-match expression with
-| match_expression: type ->> expression 
+match (expression: type) with
+| match_expression -> expression 
 ```
 * Match expressions
 ```
