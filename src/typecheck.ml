@@ -249,22 +249,46 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     | t' -> Some [(TypeError ((typ_loc t'), sprintf "attempted to assign the result of a unary expression to type %s, expected %s" (pretty_typ t') (pretty_typ (TBool loc))))]
   )
   | BinOp (loc, op, e1, e2) -> (
+    let try_pair (t: typ) (e1: expr) (e2: expr): err list option =
+      let e1' = typecheck_expr t gamma e1 in
+      let e2' = typecheck_expr t gamma e2 in
+      propagate_error e1' e2'
+    in
     match op, t with
     | op', TBool loc' when (
       (op' = Lt) || 
       (op' = Lte) ||
-      (op' = Eq) ||
       (op' = Gt) ||
-      (op' = Gte) ||
+      (op' = Gte)
+    ) -> (
+      let ee1 = try_pair (TInt loc') e1 e2 in
+      let ee2 = try_pair (TFloat loc') e1 e2 in
+      propagate_success ee1 ee2
+    )
+    | op', TBool loc' when (
+      (op' = Eq) ||
       (op' = Neq)
-    ) -> ( 
-      let e1' = typecheck_expr (TInt loc') gamma e1 in
-      let e1'' = typecheck_expr (TFloat loc') gamma e1 in
-      let ee1 = propagate_success e1' e1'' in
-      let e2' = typecheck_expr (TInt loc') gamma e2 in
-      let e2'' = typecheck_expr (TFloat loc') gamma e2 in
-      let ee2 = propagate_success e2' e2'' in
-      propagate_error ee1 ee2
+    ) -> (
+      (*
+      Since there is no type inference have to rely on exhaustive search,
+      Comparing complex types not supported
+      *)
+      let rec try_pairs (ts: typ list) (e1: expr) (e2: expr): err list option =
+        match ts with
+        | h :: t -> (
+          let e1' = try_pair h e1 e2 in
+          let e2' = try_pairs t e1 e2 in
+          propagate_success e1' e2'
+        )
+        | [] -> None
+      in
+      try_pairs [
+        TInt loc;
+        TFloat loc;
+        TString loc;
+        TChar loc;
+        TUnit loc;
+      ] e1 e2
     )
     | op', TBool loc' -> (
       let e1' = typecheck_expr (TBool loc') gamma e1 in
