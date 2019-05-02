@@ -180,6 +180,13 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex) (loc: loc): err list op
       )
       | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (pretty_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple e))))))]
     )
+    | TSecret (loc, (TTuple (loc', t))) -> (
+      match List.zip e t with
+      | Some expr_typs -> (
+        List.fold expr_typs ~f:(fun acc (e, t) -> typecheck_propagate (typecheck_expr t gamma) acc e) ~init:None
+      )
+      | None -> Some [TypeError (loc, (sprintf "Tuple %s length does not match %s" (pretty_typ (TTuple (loc, t))) (show_expr (C (loc, (Tuple e))))))]
+    )
     | t' -> Some [TypeError (loc, sprintf "Expected tuple, found %s" (pretty_typ t'))]
   )
   | Record (constructor, params) -> (
@@ -204,11 +211,17 @@ and typecheck_complex (t: typ) (gamma: env) (c: complex) (loc: loc): err list op
   | Nil -> (
     match t with
     | TList (_, _) -> None
+    | TSecret (_, (TList (_, _))) -> None
     | t' -> Some [TypeError ((typ_loc t'), (sprintf "List expected, %s found" (pretty_typ t')))]
   )
   | Cons (e1, e2) -> (
     match t with
     | TList (loc, t') -> (
+      let e1 = typecheck_expr t' gamma e1 in
+      let e2 = typecheck_expr (TList (loc, t')) gamma e2 in
+      propagate_error e1 e2
+    )
+    | TSecret (loc, TList (loc', t')) -> (
       let e1 = typecheck_expr t' gamma e1 in
       let e2 = typecheck_expr (TList (loc, t')) gamma e2 in
       propagate_error e1 e2
