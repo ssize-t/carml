@@ -1,3 +1,12 @@
+let a: int = 0;;
+let b: int = 1;;
+let c: int = 2;;
+let d: int = 3;;
+let e: int = 4;;
+
+let b1: bool = true;;
+let b2: bool = false;;
+
 let a: int = a + b;;
 let a: int = a - b;;
 let a: int = a * b;;
@@ -12,23 +21,19 @@ let a: int = (a - b) * c / (d + e);;
 let a: int = a + b * c - d / e;;
 let a: int = (a + b) * (c - d) / e;;
 
-let a: bool = a > b;;
-let a: bool = a >= b;;
-let a: bool = a = b;;
-let a: bool = a < b;;
-let a: bool = a <= b;;
-let a: bool = a && b;;
-let a: bool = a || b;;
-let a: bool = !a;;
+let b1: bool = a > b;;
+let b1: bool = a >= b;;
+let b1: bool = a = b;;
+let b1: bool = a < b;;
+let b1: bool = a <= b;;
+let b1: bool = b1 && b2;;
+let b1: bool = b1 || b2;;
+let b1: bool = !b1;;
 
-let a: bool = a > b || a > c;;
-let a: bool = a > b || a;;
-let a: bool = a > (b || a);;
+let b1: bool = a > b || a > c;;
+let b1: bool = a > b || b1;;
 
-let a: bool = a > b && a > c;;
-let a: bool = a > b && a;;
-let a: bool = a > (b && a);;
+let b1: bool = a > b && a > c;;
+let b1: bool = a > b && b2;;
 
-let a: bool = !a > b;;
-let a: bool = !(a > b);;
-let a: bool = !a > b && c < d || e;;
+let b1: bool = !(a > b);;

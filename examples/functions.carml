@@ -1,10 +1,15 @@
+let a: int = 0;;
+let b: int = 1;;
+let print s: string -> unit = ();;
+let print_int t: int -> unit = ();;
+
 let f a: int -> int = a + b;;
 let f: int -> int =
   fun a: int -> int ->> a + b;;
 
 
 let print_string str: string -> unit = print (str: string);;
-let print_int a: int -> unit = print (a: int);;
+let print_int a: int -> unit = print_int (a: int);;
 
 let f a b: int -> int -> unit =
   let c: int = a + b in
@@ -24,7 +29,7 @@ let c: unit = f ((1 + 2): int) (2: int);;
 
 let y: int = (fun x: int -> int ->> x + 1) (1: int);;
 
-let map f l: int -> int -> int list -> int list =
+let rec map f l: (int -> int) -> int list -> int list =
   match (l: int list) with
   | h :: t -> (f (h: int)) :: (map (f: int -> int) (t: int list))
   | [] -> []

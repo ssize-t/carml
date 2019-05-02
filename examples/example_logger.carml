@@ -13,13 +13,14 @@ let log_lvl_to_int lvl: log_lvl -> int =
     | Fatal -> 3
 ;;
 
-let mk_log lvl: log_lvl -> string -> log_lvl -> unit =
+let print_string s: string -> unit = ();;
+
+let mk_log lvl msg lvl': log_lvl -> string -> log_lvl -> unit =
     let l: int = (log_lvl_to_int (lvl: log_lvl)) in
-    fun msg lvl': string -> log_lvl -> unit ->>
-        let l': int = (log_lvl_to_int (lvl': log_lvl)) in
-        match (l' >= l: bool) with
-        | true -> (print_string (msg: string))
-        | _ -> ()
+    let l': int = (log_lvl_to_int (lvl': log_lvl)) in
+    match (l' >= l: bool) with
+    | true -> (print_string (msg: string))
+    | _ -> ()
 ;;
 
 let main: unit =

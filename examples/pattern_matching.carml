@@ -14,7 +14,7 @@ let head l default: int list -> int -> int =
   | [] -> default
 ;;
 
-let length l: int list -> int =
+let rec length l: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + length (t: int list)
   | [] -> 0
@@ -26,7 +26,7 @@ type exp =
   Int of int
 ;;
 
-let eval e: exp -> int =
+let rec eval e: exp -> int =
   match (e: exp) with
   | Int i -> i
   | AddExp (e1, e2) -> (
@@ -65,14 +65,13 @@ let reassemble_record r: record -> record =
   A (i, b, f)
 ;;
 
+let i i: int -> unit = ();;
+let b b: bool -> unit = ();;
+
 let test_reassemble r: record -> bool =
   let r2: record = reassemble_record (r: record) in
   match ((r, r2): record * record) with
-  | (A(i, b, f), A(i2, b2, f2)) ->
+  | (A(i, b, f), A(i2, b2, f2)) -> (
     i = i2 && b = b2 && f = f2
-;;
-
-let deeply_nested_match t: test -> bool =
-  match (t: int list * record list) with
-  | ((h :: t, _ :: A (_, b, _) :: _), _) -> b = h
+  )
 ;;
