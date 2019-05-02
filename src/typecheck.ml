@@ -79,6 +79,7 @@ let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
   | TInt _, TInt _ -> Ok true
   | TFloat _, TFloat _ -> Ok true
   | TChar _, TChar _ -> Ok true
+  | TBool _, TBool _ -> Ok true
   | TString _, TString _ -> Ok true
   | t1', t2' -> Ok (t1' = t2')
 
