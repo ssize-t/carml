@@ -6,21 +6,21 @@ A minimal ml-like language with secret annotations.
 let obfuscate msg: secret(string) -> string =
   let l: int = string_len msg in
   mk_string '*' l
-;;
 
 
-let log msg: string -> unit = print msg;;
-let log msg: secret(string) -> unit = print (obfuscate msg);;
+
+let log msg: string -> unit = print msg
+let log msg: secret(string) -> unit = print (obfuscate msg)
 
 let main: unit =
   let token: secret(string) = load_secret_value () in
   log token;
   log "Loaded secret value"
-;;
+
 ```
 
 ## Syntax
-The program is a series of statements separated by double semicolons (`;;`). Every let binding requires explicit type annotations (no type inference).
+The program is a series of statements. Every let binding requires explicit type annotations (no type inference).
 
 ### Statements
 * variable binding `let ident: type = expression`
@@ -73,16 +73,16 @@ fun a b: int -> int -> int ->> a + b
 ```
 The top-level function statement is syntactic sugar for a variable-binding of a function expression.
 ```ml
-let add1 a: int -> int = a + 1;;
-let add1: int -> int = fun a: int -> int ->> a + 1;;
+let add1 a: int -> int = a + 1
+let add1: int -> int = fun a: int -> int ->> a + 1
 ```
 Function applications require explicit type annotations on arguments
 ```ml
-let b: bool = (fun gt0 x: int -> bool ->> x > 0) (1: int);;
+let b: bool = (fun gt0 x: int -> bool ->> x > 0) (1: int)
 ```
 Partial application is supported
 ```ml
-let b: int -> bool = (fun gt a b: int -> int ->> a > b) (1: int);;
+let b: int -> bool = (fun gt a b: int -> int ->> a > b) (1: int)
 ```
 
 #### Pattern matching
