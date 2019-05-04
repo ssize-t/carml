@@ -89,6 +89,25 @@ and match_branch =
   | MCons of loc * match_branch * match_branch
 [@@deriving show]
 
+let pretty_lit (l: literal): string =
+  match l with
+  | Unit -> "()"
+  | Int i -> sprintf "%d" i
+  | Float f -> sprintf "%f" f
+  | String s -> sprintf "\"%s\"" s
+  | Char c -> sprintf "'%c'" c
+  | Bool b -> if b then "true" else "false"
+
+let rec pretty_branch (mb: match_branch): string =
+  match mb with
+  | ML (_, l) -> pretty_lit l
+  | MVar (_, s) -> s
+  | Blank _ -> "_"
+  | MTuple (_, mbs) -> sprintf "(%s)" (String.concat (List.map mbs ~f:pretty_branch) ~sep:",")
+  | MRecord (_, constructor, mbs) -> sprintf "%s(%s)" constructor (String.concat (List.map mbs ~f:pretty_branch) ~sep:",")
+  | MNil _ -> "[]"
+  | MCons (_, mb, mb') -> sprintf "%s::%s" (pretty_branch mb) (pretty_branch mb')
+
 type stmt =
   | Let of loc * string * typ * expr
   | LetRec of loc * string * typ * expr

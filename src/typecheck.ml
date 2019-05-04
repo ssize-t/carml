@@ -153,7 +153,7 @@ let rec typecheck_match (t: typ) (expr_typ: typ) (gamma: env) (e: expr) (match_b
           match_typ_shape mb2 (TList (loc', t')) gamma'
         )
       )
-      | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (show_match_branch l) (pretty_typ t'))))
+      | l, t' -> Error (TypeError ((typ_loc t'), (sprintf "Branch shape does not match specified type: %s found, %s expected" (pretty_branch l) (pretty_typ t'))))
     in
     match match_typ_shape branch expr_typ gamma with
     | Error err -> (
