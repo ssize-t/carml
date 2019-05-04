@@ -32,7 +32,7 @@ open Ast
 %token LPAREN RPAREN
 %token COMMA COLON DOUBLE_COLON AT
 
-%token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE DOUBLE_SEMI
+%token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE
 
 %token EOF
 
@@ -55,8 +55,8 @@ program:
 ;
 
 statements:
-| statement DOUBLE_SEMI { [$1] }
-| statement DOUBLE_SEMI statements { $1 :: $3 }
+| statement { [$1] }
+| statement statements { $1 :: $2 }
 ;
 
 statement:

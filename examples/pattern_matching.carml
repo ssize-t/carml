@@ -1,30 +1,30 @@
 let fst t: (int * int) -> int =
   match (t: int * int) with
   | (h, _) -> h
-;;
+
 
 let snd t: (int * int) -> int =
   match (t: int * int) with
   | (_, t) -> t
-;;
+
 
 let head l default: int list -> int -> int =
   match (l: int list) with
   | h :: t -> h
   | [] -> default
-;;
+
 
 let rec length l: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + length (t: int list)
   | [] -> 0
-;;
+
 
 type exp =
   AddExp of exp * exp |
   SubExp of exp * exp |
   Int of int
-;;
+
 
 let rec eval e: exp -> int =
   match (e: exp) with
@@ -39,34 +39,34 @@ let rec eval e: exp -> int =
     let i2: int = eval (e2: exp) in
     i1 - i2
   )
-;;
 
-type record = A of int * bool * float;;
+
+type record = A of int * bool * float
 
 let get_int a: record -> int =
   match (a: record) with
   | A (i, _, _) -> i
-;;
+
 
 let get_bool a: record -> bool =
   match (a: record) with
   | A (_, b, _) -> b
-;;
+
 
 let get_float a: record -> float =
   match (a: record) with
   | A (_, _, f) -> f
-;;
+
 
 let reassemble_record r: record -> record =
   let i: int = get_int (r: record) in
   let b: bool = get_bool (r: record) in
   let f: float = get_float (r: record) in
   A (i, b, f)
-;;
 
-let i i: int -> unit = ();;
-let b b: bool -> unit = ();;
+
+let i i: int -> unit = ()
+let b b: bool -> unit = ()
 
 let test_reassemble r: record -> bool =
   let r2: record = reassemble_record (r: record) in
@@ -74,4 +74,3 @@ let test_reassemble r: record -> bool =
   | (A(i, b, f), A(i2, b2, f2)) -> (
     i = i2 && b = b2 && f = f2
   )
-;;

@@ -1,79 +1,78 @@
-let a: int = false;;
-let b: bool = 1.234;;
-let f: float = "1.234";;
-let c: char = "a";;
-let s: string = 'a';;
+let a: int = false
+let b: bool = 1.234
+let f: float = "1.234"
+let c: char = "a"
+let s: string = 'a'
 
-let t: int * int = [1; 2];;
-let t: int * (secret(int) list) = ("abc", [1; 2; 3]);;
-let t: (int -> int) * string = (fun a: int -> int ->> a, fun a b: int -> int -> int ->> a + b);;
+let t: int * int = [1; 2]
+let t: int * (secret(int) list) = ("abc", [1; 2; 3])
+let t: (int -> int) * string = (fun a: int -> int ->> a, fun a b: int -> int -> int ->> a + b)
 let t: (secret(int) * bool) * string * bool = (
   (1234, true),
   "1234"
-);;
+)
 
-let l: int list = ['a'; 'b'; 'c'];;
-let l: int list = [1; 2; 'a'];;
+let l: int list = ['a'; 'b'; 'c']
+let l: int list = [1; 2; 'a']
 
 let fst l: int list -> int =
   match (l: int list) with
   | h :: t -> h
   | [] -> 0
-;;
 
-let a: bool = fst (l: int list);;
 
-let a: int = (fun a: int -> bool ->> a < 0) (12: int);;
+let a: bool = fst (l: int list)
 
-let add a b: int -> int = a + b;;
-let add a b: int -> int -> bool = a + b;;
+let a: int = (fun a: int -> bool ->> a < 0) (12: int)
+
+let add a b: int -> int = a + b
+let add a b: int -> int -> bool = a + b
 
 let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match ((t1, t2): int * int) with
   | ((a, (b, c)), (a', b')) -> a = a' && b = b'
   | (_, _) -> false
-;;
+
 
 let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match ((t1, t2): (int * int) * (int * int)) with
   | ((a, b), (a', b')) -> a (a': int)
   | (_, _) -> false
-;;
 
-let t: int * (int * int) = (1, 2, 3);;
-let t: int * (int * int) = (1, 2, 3);;
 
-let username: secret(string) = "password";;
-let password: string = "username";;
+let t: int * (int * int) = (1, 2, 3)
+let t: int * (int * int) = (1, 2, 3)
 
-let print_plain s: string -> unit = s; ();;
-let print_secret s: secret(string) -> unit = s; ();;
+let username: secret(string) = "password"
+let password: string = "username"
 
-let u: unit = print_secret (password: secret(string));;
-let u: unit = print_plain (username: string);;
+let print_plain s: string -> unit = s; ()
+let print_secret s: secret(string) -> unit = s; ()
+
+let u: unit = print_secret (password: secret(string))
+let u: unit = print_plain (username: string)
 
 let length l: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
-;;
+
 
 let rev l: int list -> int list =
   match (l: int list) with
   | h :: t -> (rev (t: int list)) @ ([h])
   | [] -> []
-;;
+
 
 let length: int list -> int =
   fun l: int list -> int list ->>
   match (l: int list) with
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
-;;
+
 
 let rev: int list -> int list =
   fun l: int list -> int list ->>
   match (l: int list) with
   | h :: t -> (rev (t: int list)) @ ([h])
   | [] -> []
-;;

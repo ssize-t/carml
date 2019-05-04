@@ -1,48 +1,48 @@
-let a: int = 1234;;
-let b: bool = true;;
-let f: float = 1.234;;
-let c: char = 'a';;
-let s: string = "hello, world";;
+let a: int = 1234
+let b: bool = true
+let f: float = 1.234
+let c: char = 'a'
+let s: string = "hello, world"
 
-let t: int * int = (1, 2);;
-let t: int * (secret(int) list) = (1, [1; 2; 3]);;
-let t: (int -> int) * string = (fun a: int -> int ->> a, "a");;
+let t: int * int = (1, 2)
+let t: int * (secret(int) list) = (1, [1; 2; 3])
+let t: (int -> int) * string = (fun a: int -> int ->> a, "a")
 let t: (secret(int) * bool) * string = (
   (1234, true),
   "1234"
-);;
+)
 
-let add a b: int -> int -> bool = a < b;;
+let add a b: int -> int -> bool = a < b
 
 let tuple_equal t1 t2: (int * int) -> (int * int) -> bool =
   match ((t1, t2): (int * int) * (int * int)) with
   | ((a, b), (a', b')) -> a = a' && b = b'
   | (_, _) -> false
-;;
 
-let t: int * int * int = (1, 2, 3);;
-let t: int * (int * int) = (1, (2, 3));;
 
-let password: secret(string) = "password";;
-let username: string = "username";;
+let t: int * int * int = (1, 2, 3)
+let t: int * (int * int) = (1, (2, 3))
 
-let print_plain s: string -> unit = s; ();;
-let print_secret s: secret(string) -> unit = s; ();;
+let password: secret(string) = "password"
+let username: string = "username"
 
-let u: unit = print_secret (password: secret(string));;
-let u: unit = print_plain (username: string);;
+let print_plain s: string -> unit = s; ()
+let print_secret s: secret(string) -> unit = s; ()
+
+let u: unit = print_secret (password: secret(string))
+let u: unit = print_plain (username: string)
 
 let rec length l: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
-;;
+
 
 let rec rev l: int list -> int list =
   match (l: int list) with
   | h :: t -> (rev (t: int list)) @ ([h])
   | [] -> []
-;;
+
 
 
 let rec length: int list -> int =
@@ -50,4 +50,3 @@ let rec length: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
-;;

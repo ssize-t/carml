@@ -3,29 +3,29 @@ let rec length l: int list -> int =
   match (l: int list) with
   | _ :: t -> 1 + (length (t: int list))
   | [] -> 0
-;;
+
 
 let rec zip l1 l2: int list -> int list -> (int * int) list =
   match ((l1, l2): int list * int list) with
   | (h::t, h'::t') -> (h, h') :: (zip (t: int list) (t': int list))
   | ([], []) -> []
-;;
+
 
 let rec map l f: int list -> (int -> bool) -> bool list =
   match (l: int list) with
   | h :: t -> (f (h: int)) :: (map (t: int list) (f: int -> bool))
   | [] -> []
-;;
 
-let l2: bool list = map (([1; 2; 3]): int list) ((fun f: int -> bool ->> true): int -> bool);;
+
+let l2: bool list = map (([1; 2; 3]): int list) ((fun f: int -> bool ->> true): int -> bool)
 
 let rec _reverse l acc: int list -> int list -> int list =
   match (l: int list) with
   | h :: t -> _reverse (t: int list) ((h :: acc): int list)
   | [] -> acc
-;;
 
-let reverse l: int list -> int list = _reverse (l: int list) (([]): int list);;
 
-let l: int list = [1; 2; 3];;
-let rev_l: int list = reverse (l: int list);;
+let reverse l: int list -> int list = _reverse (l: int list) (([]): int list)
+
+let l: int list = [1; 2; 3]
+let rev_l: int list = reverse (l: int list)

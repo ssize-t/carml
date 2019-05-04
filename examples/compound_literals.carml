@@ -1,18 +1,18 @@
-let t: int * int = (1234, 1234);;
-let t3: int * int = (1234, 1234);;
-let t2: int * int * int * int = (1234, 4321, 1234, 4321);;
+let t: int * int = (1234, 1234)
+let t3: int * int = (1234, 1234)
+let t2: int * int * int * int = (1234, 4321, 1234, 4321)
 
-let t: (int * int) * int = ((1234, 1234), 1234);;
-let t2: int * (int * int) = (1234, (1234, 1234));;
-let t3: (int * int) * (int * int) = ((1234, 1234), (1234, 1234));;
+let t: (int * int) * int = ((1234, 1234), 1234)
+let t2: int * (int * int) = (1234, (1234, 1234))
+let t3: (int * int) * (int * int) = ((1234, 1234), (1234, 1234))
 
-let l: int list = 1 :: [];;
-let l: int list = 1 :: 2 :: 3 :: [];;
+let l: int list = 1 :: []
+let l: int list = 1 :: 2 :: 3 :: []
 
-let l: int list = [1234; 1234; 1234];;
-let l2: int list = [];;
+let l: int list = [1234; 1234; 1234]
+let l2: int list = []
 
-let l3: (int list) list = [[1234; 1234]; [5432]];;
+let l3: (int list) list = [[1234; 1234]; [5432]]
 
-let m: (int * int) list = [(1234, 1234); (1234, 1234)];;
-let m: (int * (int list)) list = [(1234, [1234; 4321]); (1234, [1234; 4321])];;
+let m: (int * int) list = [(1234, 1234); (1234, 1234)]
+let m: (int * (int list)) list = [(1234, [1234; 4321]); (1234, [1234; 4321])]

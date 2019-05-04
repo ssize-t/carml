@@ -3,7 +3,7 @@ type log_lvl =
     Info |
     Warn |
     Fatal
-;;
+
 
 let log_lvl_to_int lvl: log_lvl -> int =
     match (lvl: log_lvl) with
@@ -11,9 +11,9 @@ let log_lvl_to_int lvl: log_lvl -> int =
     | Info -> 1
     | Warn -> 2
     | Fatal -> 3
-;;
 
-let print_string s: string -> unit = ();;
+
+let print_string s: string -> unit = ()
 
 let mk_log lvl msg lvl': log_lvl -> string -> log_lvl -> unit =
     let l: int = (log_lvl_to_int (lvl: log_lvl)) in
@@ -21,7 +21,7 @@ let mk_log lvl msg lvl': log_lvl -> string -> log_lvl -> unit =
     match (l' >= l: bool) with
     | true -> (print_string (msg: string))
     | _ -> ()
-;;
+
 
 let main: unit =
     let log: string -> log_lvl -> unit = mk_log (1: int) in
@@ -30,4 +30,3 @@ let main: unit =
     log ("warn": string) (Warn: log_lvl);
     log ("fatal": string) (Fatal: log_lvl);
     ()
-;;

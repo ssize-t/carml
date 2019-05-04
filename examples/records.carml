@@ -4,16 +4,16 @@ type r =
   R3 of char |
   R4 of string |
   R5 of bool |
-  R6;;
+  R6
 
-let r: r = R1 (1);;
-let r: r = R2 (1.0);;
-let r: r = R3 ('c');;
-let r: r = R4 ("abc");;
-let r: r = R5 (true);;
-let r: r = R6;;
+let r: r = R1 (1)
+let r: r = R2 (1.0)
+let r: r = R3 ('c')
+let r: r = R4 ("abc")
+let r: r = R5 (true)
+let r: r = R6
 
-type r2 = A of int * int | B of (int * int) * int;;
+type r2 = A of int * int | B of (int * int) * int
 
-let r2: r2 = A (1, 2);;
-let r2: r2 = B ((1, 2), 3);;
+let r2: r2 = A (1, 2)
+let r2: r2 = B ((1, 2), 3)
