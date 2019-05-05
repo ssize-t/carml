@@ -15,6 +15,7 @@ type typ =
   | TRecord of loc * string
   | TList of loc * typ
   | TSecret of loc * typ
+  | TPublic of loc * typ
 [@@deriving show]
 
 let rec pretty_typ (t: typ): string =
@@ -30,6 +31,7 @@ let rec pretty_typ (t: typ): string =
   | TRecord (_, constructor) -> constructor
   | TList (_, t') -> sprintf "%s list" (pretty_typ t')
   | TSecret (_, t') -> sprintf "secret(%s)" (pretty_typ t')
+  | TPublic (_, t') -> sprintf "public(%s)" (pretty_typ t')
   
 
 type binop = Lt | Lte | Eq | Gt | Gte | Neq | And | Or

@@ -5,7 +5,8 @@ open Ast
 %}
 
 /* Type declarations */
-%token TINT TFLOAT TBOOL TSTRING TCHAR TUNIT TLIST TSECRET
+%token TINT TFLOAT TBOOL TSTRING TCHAR TUNIT TLIST
+%token TSECRET TPUBLIC
 %token ARROW
 
 /* Simple Literals */
@@ -25,18 +26,20 @@ open Ast
 /* NumOps */
 %token SUB ADD MULT DIV
 
+/* Identifiers */
 %token <string> VALUE_IDENT TYPE_IDENT
 
+/* Keywords */
 %token LET IN FUN REC
+%token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE
+
+/* Operators */
+%right DOUBLE_COLON AT
 
 %token LPAREN RPAREN
 %token COMMA COLON DOUBLE_COLON AT
 
-%token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE
-
 %token EOF
-
-%right DOUBLE_COLON AT
 
 %left AND OR
 %right EQ NEQ
@@ -234,6 +237,7 @@ styp:
 
 ssimple_typ:
 | TSECRET LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TSecret (p.Lexing.pos_lnum, $3) }
+| TPUBLIC LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TPublic (p.Lexing.pos_lnum, $3) }
 | simple_typ { $1 }
 | ssimple_typ TLIST { let p = $symbolstartpos in TList (p.Lexing.pos_lnum, $1) }
 ;
@@ -250,29 +254,29 @@ simple_typ:
 ;
 
 typ:
+| ssimple_typ { $1 }
 | compound_typ { $1 }
 ;
 
 compound_typ:
-| TSECRET LPAREN ccompound_typ RPAREN { let p = $symbolstartpos in TSecret (p.Lexing.pos_lnum, $3) }
-| ssimple_typ { $1 }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in TSecret (p.Lexing.pos_lnum, $3) }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in TPublic (p.Lexing.pos_lnum, $3) }
 | ssimple_typ ARROW arrow_separated_ssimple_typs { let p = $symbolstartpos in TFun (p.Lexing.pos_lnum, $1 :: $3) }
 | ssimple_typ MULT mult_separated_ssimple_typs { let p = $symbolstartpos in TTuple (p.Lexing.pos_lnum, $1 :: $3) }
 ;
 
 arrow_separated_ssimple_typs:
 | ssimple_typ { [$1] }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (p.Lexing.pos_lnum, $3)] }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (p.Lexing.pos_lnum, $3)] }
 | ssimple_typ ARROW arrow_separated_ssimple_typs { $1 :: $3 }
 ;
 
 mult_separated_ssimple_typs:
 | ssimple_typ { [$1] }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (p.Lexing.pos_lnum, $3)] }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (p.Lexing.pos_lnum, $3)] }
 | ssimple_typ MULT mult_separated_ssimple_typs { $1 :: $3 }
-;
-
-ccompound_typ:
-| ssimple_typ ARROW arrow_separated_ssimple_typs { let p = $symbolstartpos in TFun (p.Lexing.pos_lnum, $1 :: $3) }
-| ssimple_typ MULT mult_separated_ssimple_typs { let p = $symbolstartpos in TTuple (p.Lexing.pos_lnum, $1 :: $3) }
 ;
 
 %%

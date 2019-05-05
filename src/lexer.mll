@@ -70,6 +70,7 @@ rule micro = parse
   | "string"    { TSTRING }
   | "char"      { TCHAR }
   | "secret"    { TSECRET }
+  | "public"    { TPUBLIC }
   | "unit"      { TUNIT }
   | "list"      { TLIST }
 
