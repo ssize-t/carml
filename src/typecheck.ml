@@ -96,7 +96,7 @@ let rec typecheck_literal (t: typ) (l: literal): string option =
   | Char _, TChar _ -> None
   | Bool _, TBool _ -> None
   | l', TSecret (_, t') -> typecheck_literal t' l'
-  | l', t' -> Some (sprintf "Expected type %s, found %s" (pretty_typ t') (show_literal l'))
+  | l', t' -> Some (sprintf "Expected type %s, found %s" (pretty_typ t') (pretty_lit l'))
 
 let rec typecheck_match (t: typ) (expr_typ: typ) (gamma: env) (e: expr) (match_branches: (match_branch * expr) list): err list option =
   match match_branches with
