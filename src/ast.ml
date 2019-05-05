@@ -110,11 +110,138 @@ let rec pretty_branch (mb: match_branch): string =
   | MNil _ -> "[]"
   | MCons (_, mb, mb') -> sprintf "%s::%s" (pretty_branch mb) (pretty_branch mb')
 
+let rec pretty_comp (c: complex): string =
+  match c with
+  | Tuple es -> (
+    let ses = String.concat (List.map es ~f:pretty_expr) ~sep:"," in
+    sprintf "(%s)" ses
+  )
+  | Record (constructor, params) -> (
+    let sparams = List.fold params ~f:(fun acc e -> (
+      let se = pretty_expr e in
+      acc ^ sprintf ", %s" se
+    )) ~init:"" in
+    sprintf "%s(%s)" constructor sparams
+  )
+  | Nil -> "[]"
+  | Cons (e1, e2) -> (
+    let se1 = pretty_expr e1 in
+    let se2 = pretty_expr e2 in
+    sprintf "%s::%s" se1 se2
+  )
+and pretty_expr (e: expr): string =
+  match e with
+  | L (_, l') -> pretty_lit l'
+  | C (_, c') -> pretty_comp c'
+  | UnOp (_, op, e') -> (
+    match op with
+    | Not -> sprintf "!(%s)" (pretty_expr e')
+  )
+  | BinOp (_, op, e1', e2') -> (
+    let se1' = pretty_expr e1' in
+    let se2' = pretty_expr e2' in
+    let sop = match op with
+    | Lt -> "<"
+    | Lte -> "<="
+    | Eq -> "="
+    | Gt -> ">"
+    | Gte -> ">="
+    | Neq -> "!="
+    | And -> "&&"
+    | Or -> "||" in
+    sprintf "%s %s %s" se1' sop se2'
+  )
+  | NumOp (_, op, e1', e2') -> (
+    let se1' = pretty_expr e1' in
+    let se2' = pretty_expr e2' in
+    let sop = match op with
+    | Sub -> "-"
+    | Add -> "+"
+    | Mult -> "*"
+    | Div -> "/" in
+    sprintf "%s %s %s" se1' sop se2'
+  )
+  | ListOp (_, op, e1', e2') -> (
+    let se1' = pretty_expr e1' in
+    let se2' = pretty_expr e2' in
+    let sop = match op with
+    | Concat -> "@" in
+    sprintf "%s %s %s" se1' sop se2'
+  )
+  | Var (_, name) -> name
+  | LetIn (_, name, typ, e1', e2') -> (
+    let styp = pretty_typ typ in
+    let body = pretty_expr e1' in
+    let rest = pretty_expr e2' in
+    sprintf "let %s: %s = %s in\n%s" name styp body rest
+  )
+  | LetRecIn (_, name, typ, e1', e2') -> (
+    let styp = pretty_typ typ in
+    let body = pretty_expr e1' in
+    let rest = pretty_expr e2' in
+    sprintf "let rec %s: %s = %s in\n%s" name styp body rest
+  )
+  | Fun (_, params, typ, e') -> (
+    let sparams = String.concat params ~sep:" " in
+    let styp = pretty_typ typ in
+    let body = pretty_expr e' in
+    sprintf "fun %s: %s ->> %s" sparams styp body
+  )
+  | Match (_, e', typ, mbs) -> (
+    let se' = pretty_expr e' in
+    let styp = pretty_typ typ in
+    let smbs = List.fold mbs ~f:(fun acc (mb, e'') -> (
+      let smb = pretty_branch mb in
+      let se'' = pretty_expr e'' in
+      acc ^ (sprintf "| %s -> %s\n" smb se'')
+    )) ~init:"" in
+    sprintf "match (%s: %s) with\n%s" se' styp smbs
+  )
+  | App (_, e1', est') -> (
+    let se1' = pretty_expr e1' in
+    let sest' = List.fold est' ~f:(fun acc (es', t') -> (
+      let ses' = pretty_expr es' in
+      let st' = pretty_typ t' in
+      acc ^ sprintf "(%s: %s) " ses' st'
+    )) ~init:"" in
+    sprintf "%s %s" se1' sest'
+  )
+  | Seq (_, e1', e2') -> (
+    sprintf "%s;\n%s" (pretty_expr e1') (pretty_expr e2')
+  )
+
 type stmt =
   | Let of loc * string * typ * expr
   | LetRec of loc * string * typ * expr
   | Type of loc * string * (string * typ list option) list
 [@@deriving show]
+
+let rec pretty_stmt (s: stmt): string =
+  match s with
+  | Let (_, name, typ, body) -> (
+    let styp = pretty_typ typ in
+    let sbody = pretty_expr body in
+    sprintf "let %s: %s = %s" name styp sbody
+  )
+  | LetRec (_, name, typ, body) -> (
+    let styp = pretty_typ typ in
+    let sbody = pretty_expr body in
+    sprintf "let rec %s: %s = %s" name styp sbody
+  )
+  | Type (_, name, constructors) -> (
+    let sconstructors = List.fold constructors ~f:(fun acc (constructor, typs) -> (
+      match typs with
+      | None -> acc ^ (sprintf "\n| %s" constructor)
+      | Some ts -> (
+        let sts = List.fold ts ~f:(fun acc t -> (
+          let st = pretty_typ t in
+          acc ^ (sprintf "* %s" st)
+        )) ~init:"" in
+        acc ^ (sprintf "\n| %s of %s" constructor sts)
+      )
+    )) ~init:"" in
+    sprintf "typ %s = %s" name sconstructors
+  )
 
 type program = stmt list
 [@@deriving show]
