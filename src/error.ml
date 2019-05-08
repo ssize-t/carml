@@ -1,4 +1,5 @@
 open Ast
+open Pretty 
 open Core
 
 type node =

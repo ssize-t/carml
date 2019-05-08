@@ -1,5 +1,6 @@
 open Ast
 open Error
+open Pretty
 open Core
 
 type constructor =
