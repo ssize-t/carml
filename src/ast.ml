@@ -1,6 +1,9 @@
-open Core
+type meta =
+  | Empty
+  | TypeErrorLoc
+[@@deriving show]
 
-type loc = int
+type loc = Loc of int * meta
 [@@deriving show]
 
 type typ =

@@ -1,6 +1,7 @@
-open Ast
-open Pretty 
 open Core
+open ANSITerminal
+open Ast
+open Pretty
 
 type node =
   | S of stmt
@@ -22,16 +23,16 @@ let pretty_node (n: node): string =
 
 let err_line (e: err): int =
   match e with
-  | SyntaxError (l, _) -> l
-  | TypeError (l, _, _) -> l
+  | SyntaxError (Loc (l, _), _) -> l
+  | TypeError (Loc (l, _), _, _) -> l
 
 let print_err (e: err) =
   match e with
-  | SyntaxError (line_no, msg) -> printf "Syntax error on line %d: %s\n" line_no msg
-  | TypeError (_, n, msg) -> printf "\n\tType error: %s\n%s\n" msg (pretty_node n |> indent_block)
+  | SyntaxError (Loc (line_no, _), msg) -> printf [red] "Syntax error on line %d: %s\n" line_no msg
+  | TypeError (_, n, msg) -> printf [red] "\n\tType error: %s\n" msg; printf [] "%s\n" (pretty_node n |> indent_block |> indent_block)
 
 let print_line_no (line_no: int) =
-  printf "Line %d:\n" line_no
+  printf [] "Line %d:\n" line_no
 
 let rec print_errs (es: err list) (line_no: int) =
   match es with
@@ -43,7 +44,7 @@ let rec print_errs (es: err list) (line_no: int) =
       print_errs t l'
     )
     | l' when l' <> line_no -> (
-      printf "\n";
+      printf [] "\n";
       print_line_no l';
       print_err e;
       print_errs t l'
@@ -54,4 +55,4 @@ let rec print_errs (es: err list) (line_no: int) =
 
 let print_errs (es: err list) =
   print_errs (List.rev es) 0;
-  printf "\n%d errors found\n" (List.length es)
+  printf [red] "\n%d errors found\n" (List.length es)

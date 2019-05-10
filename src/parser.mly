@@ -63,11 +63,11 @@ statements:
 ;
 
 statement:
-| LET VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, $4, $6) }
-| LET REC VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, $5, $7) }
-| LET VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, $5, Fun (p.Lexing.pos_lnum, $3, $5, $7)) }
-| LET REC VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, $6, Fun (p.Lexing.pos_lnum, $4, $6, $8)) }
-| TYPE VALUE_IDENT EQ typedecls { let p = $symbolstartpos in Type (p.Lexing.pos_lnum, $2, $4) }
+| LET VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in Let (Loc (p.Lexing.pos_lnum, Empty), $2, $4, $6) }
+| LET REC VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (Loc (p.Lexing.pos_lnum, Empty), $3, $5, $7) }
+| LET VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in Let (Loc (p.Lexing.pos_lnum, Empty), $2, $5, Fun (Loc (p.Lexing.pos_lnum, Empty), $3, $5, $7)) }
+| LET REC VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (Loc (p.Lexing.pos_lnum, Empty), $3, $6, Fun (Loc (p.Lexing.pos_lnum, Empty), $4, $6, $8)) }
+| TYPE VALUE_IDENT EQ typedecls { let p = $symbolstartpos in Type (Loc (p.Lexing.pos_lnum, Empty), $2, $4) }
 ;
 
 typedecls:
@@ -87,21 +87,21 @@ styps:
 
 eexpression:
 | expression { $1 }
-| expression SEMI eexpression { let p = $symbolstartpos in Seq (p.Lexing.pos_lnum, $1, $3) }
+| expression SEMI eexpression { let p = $symbolstartpos in Seq (Loc (p.Lexing.pos_lnum, Empty), $1, $3) }
 ;
 
 expression:
 | primary_expression { $1 }
-| LET VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetIn (p.Lexing.pos_lnum, $2, $4, $6, $8) }
-| LET REC VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetRecIn (p.Lexing.pos_lnum, $3, $5, $7, $9) }
-| FUN params COLON styp DOUBLE_ARROW expression { let p = $symbolstartpos in Fun (p.Lexing.pos_lnum, $2, $4, $6) }
-| MATCH LPAREN primary_expression COLON styp RPAREN WITH match_branches { let p = $symbolstartpos in Match (p.Lexing.pos_lnum, $3, $5, $8) }
+| LET VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetIn (Loc (p.Lexing.pos_lnum, Empty), $2, $4, $6, $8) }
+| LET REC VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetRecIn (Loc (p.Lexing.pos_lnum, Empty), $3, $5, $7, $9) }
+| FUN params COLON styp DOUBLE_ARROW expression { let p = $symbolstartpos in Fun (Loc (p.Lexing.pos_lnum, Empty), $2, $4, $6) }
+| MATCH LPAREN primary_expression COLON styp RPAREN WITH match_branches { let p = $symbolstartpos in Match (Loc (p.Lexing.pos_lnum, Empty), $3, $5, $8) }
 ;
 
 primary_expression:
 | simple_expression { $1 }
 | complex_expression { $1 }
-| applicative_expression typed_applicable_expressions { let p = $symbolstartpos in App (p.Lexing.pos_lnum, $1, $2) }
+| applicative_expression typed_applicable_expressions { let p = $symbolstartpos in App (Loc (p.Lexing.pos_lnum, Empty), $1, $2) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
@@ -114,21 +114,21 @@ typed_applicable_expressions:
 | typed_applicable_expression typed_applicable_expressions { $1 :: $2 }
 
 applicative_expression:
-| VALUE_IDENT { let p = $symbolstartpos in Var (p.Lexing.pos_lnum, $1) }
+| VALUE_IDENT { let p = $symbolstartpos in Var (Loc (p.Lexing.pos_lnum, Empty), $1) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
 applicable_expression:
 | simple_expression { $1 }
 /* Below is not great */
-| TYPE_IDENT { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Record ($1, []))) }
-| LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Tuple ($2 :: $4))) }
+| TYPE_IDENT { let p = $symbolstartpos in C (Loc (p.Lexing.pos_lnum, Empty), (Record ($1, []))) }
+| LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (Loc (p.Lexing.pos_lnum, Empty), (Tuple ($2 :: $4))) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
 simple_expression:
-| literal { let p = $symbolstartpos in L (p.Lexing.pos_lnum, $1) }
-| VALUE_IDENT { let p = $symbolstartpos in Var (p.Lexing.pos_lnum, $1) }
+| literal { let p = $symbolstartpos in L (Loc (p.Lexing.pos_lnum, Empty), $1) }
+| VALUE_IDENT { let p = $symbolstartpos in Var (Loc (p.Lexing.pos_lnum, Empty), $1) }
 ;
 
 complex_expression:
@@ -137,7 +137,7 @@ complex_expression:
 | unop { $1 }
 | listop { $1 }
 | LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
-| complex_literal { let p = $symbolstartpos in C (p.Lexing.pos_lnum, $1) }
+| complex_literal { let p = $symbolstartpos in C (Loc (p.Lexing.pos_lnum, Empty), $1) }
 ;
 
 literal:
@@ -164,18 +164,18 @@ primary_match_branch:
 ;
 
 simple_branch:
-| literal { let p = $symbolstartpos in ML (p.Lexing.pos_lnum, $1) }
-| VALUE_IDENT { let p = $symbolstartpos in MVar (p.Lexing.pos_lnum, $1) }
-| UNDERSCORE { let p = $symbolstartpos in Blank p.Lexing.pos_lnum }
-| TYPE_IDENT { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, []) }
+| literal { let p = $symbolstartpos in ML (Loc (p.Lexing.pos_lnum, Empty), $1) }
+| VALUE_IDENT { let p = $symbolstartpos in MVar (Loc (p.Lexing.pos_lnum, Empty), $1) }
+| UNDERSCORE { let p = $symbolstartpos in Blank (Loc (p.Lexing.pos_lnum, Empty)) }
+| TYPE_IDENT { let p = $symbolstartpos in MRecord (Loc (p.Lexing.pos_lnum, Empty), $1, []) }
 ;
 
 compund_branch:
-| LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MTuple (p.Lexing.pos_lnum, $2) }
-| TYPE_IDENT simple_branch { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, [$2]) }
-| TYPE_IDENT LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, $3) }
-| LBRACKET RBRACKET { let p =  $symbolstartpos in MNil p.Lexing.pos_lnum }
-| primary_match_branch DOUBLE_COLON primary_match_branch { let p = $symbolstartpos in MCons (p.Lexing.pos_lnum, $1, $3) }
+| LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MTuple (Loc (p.Lexing.pos_lnum, Empty), $2) }
+| TYPE_IDENT simple_branch { let p = $symbolstartpos in MRecord (Loc (p.Lexing.pos_lnum, Empty), $1, [$2]) }
+| TYPE_IDENT LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MRecord (Loc (p.Lexing.pos_lnum, Empty), $1, $3) }
+| LBRACKET RBRACKET { let p =  $symbolstartpos in MNil (Loc (p.Lexing.pos_lnum, Empty)) }
+| primary_match_branch DOUBLE_COLON primary_match_branch { let p = $symbolstartpos in MCons (Loc (p.Lexing.pos_lnum, Empty), $1, $3) }
 ;
 
 comma_sep_match_branch:
@@ -192,29 +192,29 @@ complex_literal:
 ;
 
 unop:
-| NOT primary_expression { let p = $symbolstartpos in UnOp (p.Lexing.pos_lnum, Not, $2) }
+| NOT primary_expression { let p = $symbolstartpos in UnOp (Loc (p.Lexing.pos_lnum, Empty), Not, $2) }
 ;
 
 listop:
-| primary_expression AT primary_expression { let p = $symbolstartpos in ListOp (p.Lexing.pos_lnum, Concat, $1, $3)}
+| primary_expression AT primary_expression { let p = $symbolstartpos in ListOp (Loc (p.Lexing.pos_lnum, Empty), Concat, $1, $3)}
 ;
 
 binop:
-| primary_expression AND primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, And, $1, $3) }
-| primary_expression OR primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Or, $1, $3) }
-| primary_expression LT primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Lt, $1, $3) }
-| primary_expression LTE primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Lte, $1, $3) }
-| primary_expression GT primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Gt, $1, $3) }
-| primary_expression GTE primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Gte, $1, $3) }
-| primary_expression EQ primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Eq, $1, $3) }
-| primary_expression NEQ primary_expression { let p = $symbolstartpos in BinOp (p.Lexing.pos_lnum, Neq, $1, $3) }
+| primary_expression AND primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), And, $1, $3) }
+| primary_expression OR primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Or, $1, $3) }
+| primary_expression LT primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Lt, $1, $3) }
+| primary_expression LTE primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Lte, $1, $3) }
+| primary_expression GT primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Gt, $1, $3) }
+| primary_expression GTE primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Gte, $1, $3) }
+| primary_expression EQ primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Eq, $1, $3) }
+| primary_expression NEQ primary_expression { let p = $symbolstartpos in BinOp (Loc (p.Lexing.pos_lnum, Empty), Neq, $1, $3) }
 ;
 
 numop:
-| primary_expression ADD primary_expression { let p = $symbolstartpos in NumOp (p.Lexing.pos_lnum, Add, $1, $3) }
-| primary_expression SUB primary_expression { let p = $symbolstartpos in NumOp (p.Lexing.pos_lnum, Sub, $1, $3) }
-| primary_expression MULT primary_expression { let p = $symbolstartpos in NumOp (p.Lexing.pos_lnum, Mult, $1, $3) }
-| primary_expression DIV primary_expression { let p = $symbolstartpos in NumOp (p.Lexing.pos_lnum, Div, $1, $3) }
+| primary_expression ADD primary_expression { let p = $symbolstartpos in NumOp (Loc (p.Lexing.pos_lnum, Empty), Add, $1, $3) }
+| primary_expression SUB primary_expression { let p = $symbolstartpos in NumOp (Loc (p.Lexing.pos_lnum, Empty), Sub, $1, $3) }
+| primary_expression MULT primary_expression { let p = $symbolstartpos in NumOp (Loc (p.Lexing.pos_lnum, Empty), Mult, $1, $3) }
+| primary_expression DIV primary_expression { let p = $symbolstartpos in NumOp (Loc (p.Lexing.pos_lnum, Empty), Div, $1, $3) }
 ;
 
 comma_sep_expr:
@@ -223,8 +223,8 @@ comma_sep_expr:
 ;
 
 semi_sep_primary_expr:
-| primary_expression { let p = $symbolstartpos in C (p.Lexing.pos_lnum, Cons ($1, C (p.Lexing.pos_lnum, Nil))) }
-| primary_expression SEMI semi_sep_primary_expr { let p = $symbolstartpos in C (p.Lexing.pos_lnum, Cons ($1, $3)) }
+| primary_expression { let p = $symbolstartpos in C (Loc (p.Lexing.pos_lnum, Empty), Cons ($1, C (Loc (p.Lexing.pos_lnum, Empty), Nil))) }
+| primary_expression SEMI semi_sep_primary_expr { let p = $symbolstartpos in C (Loc (p.Lexing.pos_lnum, Empty), Cons ($1, $3)) }
 ;
 
 params:
@@ -236,20 +236,20 @@ styp:
 ;
 
 ssimple_typ:
-| TSECRET LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TSecret (p.Lexing.pos_lnum, $3) }
-| TPUBLIC LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TPublic (p.Lexing.pos_lnum, $3) }
+| TSECRET LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TSecret (Loc (p.Lexing.pos_lnum, Empty), $3) }
+| TPUBLIC LPAREN ssimple_typ RPAREN { let p = $symbolstartpos in TPublic (Loc (p.Lexing.pos_lnum, Empty), $3) }
 | simple_typ { $1 }
-| ssimple_typ TLIST { let p = $symbolstartpos in TList (p.Lexing.pos_lnum, $1) }
+| ssimple_typ TLIST { let p = $symbolstartpos in TList (Loc (p.Lexing.pos_lnum, Empty), $1) }
 ;
 
 simple_typ:
-| TINT { let p = $symbolstartpos in TInt p.Lexing.pos_lnum }
-| TFLOAT { let p = $symbolstartpos in TFloat p.Lexing.pos_lnum }
-| TBOOL { let p = $symbolstartpos in TBool p.Lexing.pos_lnum }
-| TSTRING { let p = $symbolstartpos in TString p.Lexing.pos_lnum }
-| TUNIT { let p = $symbolstartpos in TUnit p.Lexing.pos_lnum }
-| TCHAR { let p = $symbolstartpos in TChar p.Lexing.pos_lnum }
-| VALUE_IDENT { let p = $symbolstartpos in TRecord (p.Lexing.pos_lnum, $1) }
+| TINT { let p = $symbolstartpos in TInt (Loc (p.Lexing.pos_lnum, Empty)) }
+| TFLOAT { let p = $symbolstartpos in TFloat (Loc (p.Lexing.pos_lnum, Empty)) }
+| TBOOL { let p = $symbolstartpos in TBool (Loc (p.Lexing.pos_lnum, Empty)) }
+| TSTRING { let p = $symbolstartpos in TString (Loc (p.Lexing.pos_lnum, Empty)) }
+| TUNIT { let p = $symbolstartpos in TUnit (Loc (p.Lexing.pos_lnum, Empty)) }
+| TCHAR { let p = $symbolstartpos in TChar (Loc (p.Lexing.pos_lnum, Empty)) }
+| VALUE_IDENT { let p = $symbolstartpos in TRecord (Loc (p.Lexing.pos_lnum, Empty), $1) }
 | LPAREN styp RPAREN { $2 }
 ;
 
@@ -259,23 +259,23 @@ typ:
 ;
 
 compound_typ:
-| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in TSecret (p.Lexing.pos_lnum, $3) }
-| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in TPublic (p.Lexing.pos_lnum, $3) }
-| ssimple_typ ARROW arrow_separated_ssimple_typs { let p = $symbolstartpos in TFun (p.Lexing.pos_lnum, $1 :: $3) }
-| ssimple_typ MULT mult_separated_ssimple_typs { let p = $symbolstartpos in TTuple (p.Lexing.pos_lnum, $1 :: $3) }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in TSecret (Loc (p.Lexing.pos_lnum, Empty), $3) }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in TPublic (Loc (p.Lexing.pos_lnum, Empty), $3) }
+| ssimple_typ ARROW arrow_separated_ssimple_typs { let p = $symbolstartpos in TFun (Loc (p.Lexing.pos_lnum, Empty), $1 :: $3) }
+| ssimple_typ MULT mult_separated_ssimple_typs { let p = $symbolstartpos in TTuple (Loc (p.Lexing.pos_lnum, Empty), $1 :: $3) }
 ;
 
 arrow_separated_ssimple_typs:
 | ssimple_typ { [$1] }
-| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (p.Lexing.pos_lnum, $3)] }
-| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (p.Lexing.pos_lnum, $3)] }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (Loc (p.Lexing.pos_lnum, Empty), $3)] }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (Loc (p.Lexing.pos_lnum, Empty), $3)] }
 | ssimple_typ ARROW arrow_separated_ssimple_typs { $1 :: $3 }
 ;
 
 mult_separated_ssimple_typs:
 | ssimple_typ { [$1] }
-| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (p.Lexing.pos_lnum, $3)] }
-| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (p.Lexing.pos_lnum, $3)] }
+| TSECRET LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TSecret (Loc (p.Lexing.pos_lnum, Empty), $3)] }
+| TPUBLIC LPAREN compound_typ RPAREN { let p = $symbolstartpos in [TPublic (Loc (p.Lexing.pos_lnum, Empty), $3)] }
 | ssimple_typ MULT mult_separated_ssimple_typs { $1 :: $3 }
 ;
 
