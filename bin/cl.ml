@@ -1,6 +1,12 @@
 open Core
 open Carml
 
+let parse_expr buf =
+  let lexbuf = Lexing.from_string buf in
+  try
+    Ok (Parser.single_expression Lexer.micro lexbuf)
+  with s -> Error (Exn.to_string s)
+
 let parse f =
   let lexbuf = Lexing.from_channel (In_channel.create f) in
   try
@@ -24,6 +30,28 @@ let pretty f =
     printf "%s" (Carml.Pretty.pretty_program program)
   with s -> printf "%s\n" (Exn.to_string s)
 
+let repl_header = "
+Carml 0.0.1
+"
+
+let rec _repl st =
+  printf ">>> ";
+  Out_channel.flush Out_channel.stdout;
+  let line = In_channel.input_line In_channel.stdin in
+  match line with
+  | None -> ()
+  | Some "" -> _repl st
+  | Some "exit" -> ()
+  | Some l -> (
+    match parse_expr l with
+    | Error e -> printf "Parse error: %s" e; _repl st
+    | Ok s -> printf "%s" (Carml.Eval.show_value (Carml.Eval.eval_expr st s)); _repl st
+  )
+
+let repl st =
+  printf "%s\n" repl_header;
+  _repl st
+
 let help = fun _ ->
   printf "
 Usage: cl [command] ...
@@ -31,6 +59,7 @@ Options:
   parse <filename>            Parse filename and print AST
   typecheck <filename>        Typecheck filename and print errors
   pretty <filename>           Pretty-print filename to stdin
+  repl                        Launch REPL
 
   -h/--help                   Print this message\n"
 
@@ -40,6 +69,7 @@ let () =
   | "parse" -> parse (Array.nget Sys.argv 2)
   | "typecheck" -> typecheck (Array.nget Sys.argv 2)
   | "pretty" -> pretty (Array.nget Sys.argv 2)
+  | "repl"   -> repl Carml.Eval.empty_state
   | "-h" -> help ()
   | "--help" -> help ()
   | s -> printf "Unknown command: %s (-h/--help for help)\n" s
