@@ -59,7 +59,7 @@ let bool_and (v: value) (v': value): value =
 let bool_or (v: value) (v': value): value =
   match v, v' with
   | Bool v, Bool v' -> Bool (v && v')
-  | _, _ -> Error (sprintf "Cannot take a boolean and of %s and %s" (show_value v) (show_value v'))
+  | _, _ -> Error (sprintf "Cannot take a boolean or of %s and %s" (show_value v) (show_value v'))
 
 let rec concat_lists (v: value) (v': value): value =
   match v with
@@ -83,7 +83,75 @@ let rec eval_complex (st: state) (c: complex): value =
   | Nil -> Nil
   | Cons (e, e') -> Cons (eval_expr st e, eval_expr st e')
 
-and eval_match_expr (st: state) (v: value) (mbs: (match_branch * expr) list): value = Nil
+and match_value (v: value) (mb: match_branch) (st: state): (state, unit) result =
+  match mb with
+  | ML (_, lit) -> (
+    match v, lit with
+    | Unit, Unit -> Ok st
+    | Int i, Int i' when i = i' -> Ok st
+    | Float f, Float f' when f = f' -> Ok st
+    | String s, String s' when s = s' -> Ok st
+    | Char c, Char c' when c = c' -> Ok st
+    | Bool b, Bool b' when b = b' -> Ok st
+    | _ -> Error ()
+  )
+  | MVar (_, name) -> Ok (update st name (Some v))
+  | Blank _ -> Ok st
+  | MTuple (_, mbs') -> (
+    match v with
+    | Tuple vs -> (
+      let vmbs = List.zip vs mbs' in
+      match vmbs with
+      | None -> Error ()
+      | Some vmbs -> (
+        List.fold vmbs ~f:(fun acc (v, mb) -> (
+          match acc with
+          | Error _ -> Error ()
+          | Ok st -> match_value v mb st
+        )) ~init:(Ok st)
+      )
+    )
+    | _ -> Error ()
+  )
+  | MNil _ -> (
+    match v with
+    | Nil -> Ok st
+    | _ -> Error ()
+  )
+  | MCons (_, mb, mb') -> (
+    match v with
+    | Cons (v, v') -> (
+      match match_value v mb st with
+      | Error _ -> Error ()
+      | Ok st' -> match_value v' mb' st'
+    )
+    | _ -> Error ()
+  )
+  | MRecord (_, name, mbs') -> (
+    match v with
+    | Record (name', vs) when name = name' -> (
+      let vmbs = List.zip vs mbs' in
+      match vmbs with
+      | Some vmbs -> (
+        List.fold vmbs ~f:(fun acc (v, mb) -> (
+          match acc with
+          | Error _ -> Error ()
+          | Ok st -> match_value v mb st
+        )) ~init:(Ok st)
+      )
+      | None -> Error () 
+    )
+    | _ -> Error ()
+  )
+
+and eval_match_expr (st: state) (v: value) (mbs: (match_branch * expr) list): value =
+  match mbs with
+  | [] -> Error "No match found, please add exhaustiveness checks"
+  | (h, e) :: t -> (
+    match match_value v h st with
+    | Error _ -> eval_match_expr st v t
+    | Ok st' -> eval_expr st' e
+  )
 
 and eval_expr (st: state) (e: expr): value =
   match e with
