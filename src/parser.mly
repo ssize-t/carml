@@ -48,8 +48,9 @@ open Ast
 %left MULT DIV
 %left NOT
 
-%start program
+%start program single_expression
 %type <Ast.program> program
+%type <Ast.expr> single_expression
 
 %%
 
@@ -89,6 +90,9 @@ eexpression:
 | expression { $1 }
 | expression SEMI eexpression { let p = $symbolstartpos in Seq (p.Lexing.pos_lnum, $1, $3) }
 ;
+
+single_expression:
+| expression EOF { $1 }
 
 expression:
 | primary_expression { $1 }
