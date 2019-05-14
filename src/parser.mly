@@ -48,9 +48,10 @@ open Ast
 %left MULT DIV
 %left NOT
 
-%start program single_expression
+%start program single_expression single_statement
 %type <Ast.program> program
 %type <Ast.expr> single_expression
+%type <Ast.stmt> single_statement
 
 %%
 
@@ -62,6 +63,9 @@ statements:
 | statement { [$1] }
 | statement statements { $1 :: $2 }
 ;
+
+single_statement:
+| statement EOF { $1 }
 
 statement:
 | LET VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, $4, $6) }
