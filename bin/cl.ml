@@ -6,10 +6,9 @@ let run f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Carml.Typecheck.typecheck program with
-    | (program, Some errs) -> Error.print_errs errs;
-    | (program, None) -> Carml.Eval.eval_program program;
-    ()
-  with s -> printf "%s\n" (Exn.to_string s)
+    | (program, Some errs) -> Error.print_errs errs; None
+    | (program, None) -> Some (Carml.Eval.eval_program program)
+  with s -> printf "%s\n" (Exn.to_string s); None
 
 let parse_expr buf =
   let lexbuf = Lexing.from_string buf in
@@ -62,6 +61,7 @@ let show_mode mode =
 let repl_help mode = sprintf "
 Type \":stmt\" to enter statement mode
 Type \":expr\" to enter expression mode
+Type \":load <filename>\" to load a file into the current environment
 
 You are in %s mode
 " (show_mode mode)
@@ -78,6 +78,12 @@ let rec _repl st (mode: repl_mode) (buf: string) =
   | Some ":expr" when buf = "" -> printf "Switched to expression mode\n"; _repl st Expr ""
   | Some ":stmt" when buf = "" -> printf "Switched to statement mode\n"; _repl st Stmt ""
   | Some ":help" when buf = "" -> printf "%s" (repl_help mode); _repl st mode ""
+  | Some l when String.substr_index l ~pattern:":load" = Some 0 -> (
+    let filename = String.strip (String.substr_replace_first l ~pattern:":load" ~pos:0 ~with_:"") in
+    match run filename with
+    | Some st' -> _repl st' mode ""
+    | None -> _repl st mode ""
+  )
   | Some l when String.substr_index l ~pattern:";;" = Some (String.length l - 2) -> (
     let l = buf ^ l in
     let pos = String.substr_index_all l ~pattern:";;" ~may_overlap:false in
@@ -132,7 +138,7 @@ let () =
   | "typecheck" -> typecheck (Array.nget Sys.argv 2)
   | "pretty" -> pretty (Array.nget Sys.argv 2)
   | "repl"   -> repl Carml.Eval.empty_state Auto ""
-  | "run"    -> run (Array.nget Sys.argv 2)
+  | "run"    -> run (Array.nget Sys.argv 2); ()
   | "-h" -> help ()
   | "--help" -> help ()
   | s -> printf "Unknown command: %s (-h/--help for help)\n" s
