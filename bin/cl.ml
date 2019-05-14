@@ -1,6 +1,16 @@
 open Core
 open Carml
 
+let run f =
+  let lexbuf = Lexing.from_channel (In_channel.create f) in
+  try
+    let program = Parser.program Lexer.micro lexbuf in
+    match Carml.Typecheck.typecheck program with
+    | (program, Some errs) -> Error.print_errs errs;
+    | (program, None) -> Carml.Eval.eval_program program;
+    ()
+  with s -> printf "%s\n" (Exn.to_string s)
+
 let parse_expr buf =
   let lexbuf = Lexing.from_string buf in
   try
@@ -92,6 +102,7 @@ Options:
   typecheck <filename>        Typecheck filename and print errors
   pretty <filename>           Pretty-print filename to stdin
   repl                        Launch REPL
+  run <filename>              Interpret file filename
 
   -h/--help                   Print this message\n"
 
@@ -102,6 +113,7 @@ let () =
   | "typecheck" -> typecheck (Array.nget Sys.argv 2)
   | "pretty" -> pretty (Array.nget Sys.argv 2)
   | "repl"   -> repl Carml.Eval.empty_state Expr
+  | "run"    -> run (Array.nget Sys.argv 2)
   | "-h" -> help ()
   | "--help" -> help ()
   | s -> printf "Unknown command: %s (-h/--help for help)\n" s
