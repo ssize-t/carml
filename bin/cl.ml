@@ -25,7 +25,7 @@ let typecheck f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Typecheck.typecheck program with
-    | (program, Some err) -> Error.print_errs err
+    | (program, Some err) -> Error.print_errs err; printf "%s" (Carml.Pretty.pretty_program program);
     | (program, None) -> printf "Typecheck ok"
   with s -> printf "%s\n" (Exn.to_string s)
 
@@ -38,9 +38,22 @@ let pretty f =
 
 let repl_header = "
 Carml 0.0.1
+Type \":help\" for more information
 "
 
 type repl_mode = Expr | Stmt
+
+let show_mode mode =
+  match mode with
+  | Expr -> "expression"
+  | Stmt -> "statement"
+
+let repl_help mode = sprintf "
+Type \":stmt\" to enter statement mode
+Type \":expr\" to enter expression mode
+
+You are in %s mode
+" (show_mode mode)
 
 let rec _repl st (mode: repl_mode) =
   printf ">>> ";
@@ -52,12 +65,13 @@ let rec _repl st (mode: repl_mode) =
   | Some "exit" -> ()
   | Some ":expr" -> printf "Switched to expression mode\n"; _repl st Expr
   | Some ":stmt" -> printf "Switched to statement mode\n"; _repl st Stmt
+  | Some ":help" -> printf "%s" (repl_help mode); _repl st mode
   | Some l -> (
     match mode with
     | Expr -> (
       match parse_expr l with
       | Error e -> printf "Parse error: %s" e; _repl st mode
-      | Ok s -> printf "%s\n" (Carml.Eval.show_value (Carml.Eval.eval_expr st s)); _repl st mode
+      | Ok s -> printf "%s\n" (Carml.Eval.pretty_value (Carml.Eval.eval_expr st s)); _repl st mode
     )
     | Stmt -> (
       match parse_stmt l with
