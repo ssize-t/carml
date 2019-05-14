@@ -1,4 +1,5 @@
 open Ast
+open Pretty
 open Core
 
 type value =
@@ -25,7 +26,7 @@ let rec pretty_value (v: value): string =
   | Char c -> (sprintf "%c" c)
   | String s -> (sprintf "\"%s\"" s)
   | Unit -> "()"
-  | Fun (params, expr) -> (sprintf "fun %s -> %s" (String.concat params ~sep:" ") (show_expr expr))
+  | Fun (params, expr) -> (sprintf "fun %s -> %s" (String.concat params ~sep:" ") (pretty_expr expr))
   | Tuple vs -> (sprintf "(%s)" (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
   | Record (name, vs) -> (sprintf "%s(%s)" name (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
   | Nil -> "[]"
