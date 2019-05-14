@@ -51,12 +51,13 @@ Carml 0.0.1
 Type \":help\" for more information
 "
 
-type repl_mode = Expr | Stmt
+type repl_mode = Expr | Stmt | Auto
 
 let show_mode mode =
   match mode with
   | Expr -> "expression"
   | Stmt -> "statement"
+  | Auto -> "auto"
 
 let repl_help mode = sprintf "
 Type \":stmt\" to enter statement mode
@@ -73,6 +74,7 @@ let rec _repl st (mode: repl_mode) =
   | None -> ()
   | Some "" -> _repl st mode
   | Some "exit" -> ()
+  | Some ":auto" -> printf "Switched to auto mode\n"; _repl st Auto
   | Some ":expr" -> printf "Switched to expression mode\n"; _repl st Expr
   | Some ":stmt" -> printf "Switched to statement mode\n"; _repl st Stmt
   | Some ":help" -> printf "%s" (repl_help mode); _repl st mode
@@ -80,13 +82,22 @@ let rec _repl st (mode: repl_mode) =
     match mode with
     | Expr -> (
       match parse_expr l with
-      | Error e -> printf "Parse error: %s" e; _repl st mode
+      | Error e -> printf "Parse error: %s\n" e; _repl st mode
       | Ok s -> printf "%s\n" (Carml.Eval.pretty_value (Carml.Eval.eval_expr st s)); _repl st mode
     )
     | Stmt -> (
       match parse_stmt l with
       | Ok s -> _repl (Carml.Eval.eval_stmt st s) mode
-      | Error e -> printf "Parse error: %s" e; _repl st mode
+      | Error e -> printf "Parse error: %s\n" e; _repl st mode
+    )
+    | Auto -> (
+      match parse_stmt l with
+      | Ok s -> _repl (Carml.Eval.eval_stmt st s) mode
+      | Error e -> (
+        match parse_expr l with
+        | Ok s -> printf "%s\n" (Carml.Eval.pretty_value (Carml.Eval.eval_expr st s)); _repl st mode
+        | Error e -> printf "Parse error: %s\n" e; _repl st mode
+      )
     )
   )
 
@@ -112,7 +123,7 @@ let () =
   | "parse" -> parse (Array.nget Sys.argv 2)
   | "typecheck" -> typecheck (Array.nget Sys.argv 2)
   | "pretty" -> pretty (Array.nget Sys.argv 2)
-  | "repl"   -> repl Carml.Eval.empty_state Expr
+  | "repl"   -> repl Carml.Eval.empty_state Auto
   | "run"    -> run (Array.nget Sys.argv 2)
   | "-h" -> help ()
   | "--help" -> help ()
