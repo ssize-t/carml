@@ -17,6 +17,22 @@ type value =
   | Rec
 [@@deriving show]
 
+let rec pretty_value (v: value): string =
+  match v with
+  | Int i -> string_of_int i
+  | Float f -> string_of_float f
+  | Bool b -> string_of_bool b
+  | Char c -> (sprintf "%c" c)
+  | String s -> (sprintf "\"%s\"" s)
+  | Unit -> "()"
+  | Fun (params, expr) -> (sprintf "fun %s -> %s" (String.concat params ~sep:" ") (show_expr expr))
+  | Tuple vs -> (sprintf "(%s)" (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
+  | Record (name, vs) -> (sprintf "%s(%s)" name (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
+  | Nil -> "[]"
+  | Cons (v, v') -> (sprintf "%s::%s" (pretty_value v) (pretty_value v'))
+  | Error e -> e
+  | Rec -> "rec"
+
 type state = string -> value option
 let empty_state = fun _ -> None
 let update st n v =
