@@ -142,7 +142,7 @@ Options:
   -h/--help                   Print this message\n"
 
 let () =
-  if (Array.length Sys.argv) < 2 then printf "Too few arguments (-h/--help for help)\n" else
+  if (Array.length Sys.argv = 1) then repl Carml.Eval.empty_state Carml.Typecheck.empty_env Auto "" else
   match Array.nget Sys.argv 1 with
   | "parse" -> parse (Array.nget Sys.argv 2)
   | "typecheck" -> typecheck (Array.nget Sys.argv 2)
