@@ -6,8 +6,8 @@ let run f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Carml.Typecheck.typecheck program with
-    | (program, Some errs) -> Error.print_errs errs; None
-    | (program, None) -> Some (Carml.Eval.eval_program program)
+    | (program, Error errs) -> Error.print_errs errs; None
+    | (program, Ok gamma') -> Some (Carml.Eval.eval_program program, gamma')
   with s -> printf "%s\n" (Exn.to_string s); None
 
 let parse_expr buf =
@@ -34,8 +34,8 @@ let typecheck f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Typecheck.typecheck program with
-    | (program, Some err) -> Error.print_errs err; printf "%s" (Carml.Pretty.pretty_program program);
-    | (program, None) -> printf "Typecheck ok"
+    | (program, Error err) -> Error.print_errs err; printf "%s" (Carml.Pretty.pretty_program program);
+    | (program, Ok _) -> printf "Typecheck ok"
   with s -> printf "%s\n" (Exn.to_string s)
 
 let pretty f =
@@ -81,7 +81,7 @@ let rec _repl (st: Carml.Eval.state) (gamma: Carml.Typecheck.env) (mode: repl_mo
   | Some l when String.substr_index l ~pattern:":load" = Some 0 -> (
     let filename = String.strip (String.substr_replace_first l ~pattern:":load" ~pos:0 ~with_:"") in
     match run filename with
-    | Some st' -> _repl st' gamma mode ""
+    | Some (st', gamma') -> _repl st' gamma' mode ""
     | None -> _repl st gamma mode ""
   )
   | Some l when String.substr_index l ~pattern:";;" = Some (String.length l - 2) -> (
