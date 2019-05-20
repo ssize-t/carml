@@ -1,5 +1,3 @@
-open Core
-
 type loc = int
 [@@deriving show]
 

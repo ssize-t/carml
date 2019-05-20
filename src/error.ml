@@ -1,6 +1,6 @@
-open Ast
-open Pretty 
 open Core
+open Ast
+open Pretty
 
 type node =
   | S of stmt
@@ -28,7 +28,7 @@ let err_line (e: err): int =
 let print_err (e: err) =
   match e with
   | SyntaxError (line_no, msg) -> printf "Syntax error on line %d: %s\n" line_no msg
-  | TypeError (_, n, msg) -> printf "\n\tType error: %s\n%s\n" msg (pretty_node n |> indent_block)
+  | TypeError (_, n, msg) -> printf "\n\tType error: %s\n" msg; printf "%s\n" (pretty_node n |> indent_block |> indent_block)
 
 let print_line_no (line_no: int) =
   printf "Line %d:\n" line_no

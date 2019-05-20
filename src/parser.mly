@@ -174,7 +174,7 @@ primary_match_branch:
 simple_branch:
 | literal { let p = $symbolstartpos in ML (p.Lexing.pos_lnum, $1) }
 | VALUE_IDENT { let p = $symbolstartpos in MVar (p.Lexing.pos_lnum, $1) }
-| UNDERSCORE { let p = $symbolstartpos in Blank p.Lexing.pos_lnum }
+| UNDERSCORE { let p = $symbolstartpos in Blank (p.Lexing.pos_lnum) }
 | TYPE_IDENT { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, []) }
 ;
 
@@ -182,7 +182,7 @@ compund_branch:
 | LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MTuple (p.Lexing.pos_lnum, $2) }
 | TYPE_IDENT simple_branch { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, [$2]) }
 | TYPE_IDENT LPAREN comma_sep_match_branch RPAREN { let p = $symbolstartpos in MRecord (p.Lexing.pos_lnum, $1, $3) }
-| LBRACKET RBRACKET { let p =  $symbolstartpos in MNil p.Lexing.pos_lnum }
+| LBRACKET RBRACKET { let p =  $symbolstartpos in MNil (p.Lexing.pos_lnum) }
 | primary_match_branch DOUBLE_COLON primary_match_branch { let p = $symbolstartpos in MCons (p.Lexing.pos_lnum, $1, $3) }
 ;
 
@@ -251,12 +251,12 @@ ssimple_typ:
 ;
 
 simple_typ:
-| TINT { let p = $symbolstartpos in TInt p.Lexing.pos_lnum }
-| TFLOAT { let p = $symbolstartpos in TFloat p.Lexing.pos_lnum }
-| TBOOL { let p = $symbolstartpos in TBool p.Lexing.pos_lnum }
-| TSTRING { let p = $symbolstartpos in TString p.Lexing.pos_lnum }
-| TUNIT { let p = $symbolstartpos in TUnit p.Lexing.pos_lnum }
-| TCHAR { let p = $symbolstartpos in TChar p.Lexing.pos_lnum }
+| TINT { let p = $symbolstartpos in TInt (p.Lexing.pos_lnum) }
+| TFLOAT { let p = $symbolstartpos in TFloat (p.Lexing.pos_lnum) }
+| TBOOL { let p = $symbolstartpos in TBool (p.Lexing.pos_lnum) }
+| TSTRING { let p = $symbolstartpos in TString (p.Lexing.pos_lnum) }
+| TUNIT { let p = $symbolstartpos in TUnit (p.Lexing.pos_lnum) }
+| TCHAR { let p = $symbolstartpos in TChar (p.Lexing.pos_lnum) }
 | VALUE_IDENT { let p = $symbolstartpos in TRecord (p.Lexing.pos_lnum, $1) }
 | LPAREN styp RPAREN { $2 }
 ;
