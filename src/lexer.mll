@@ -36,7 +36,6 @@ rule micro = parse
   | "match"     { MATCH }
   | "of"        { OF }
   | "with"      { WITH }
-  | "->>"       { DOUBLE_ARROW }
   | "->"        { ARROW }
   | '|'         { BAR }
   | '_'         { UNDERSCORE }

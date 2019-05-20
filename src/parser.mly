@@ -31,7 +31,7 @@ open Ast
 
 /* Keywords */
 %token LET IN FUN REC
-%token MATCH TYPE BAR OF WITH DOUBLE_ARROW UNDERSCORE
+%token MATCH TYPE BAR OF WITH UNDERSCORE
 
 /* Operators */
 %right DOUBLE_COLON AT
@@ -68,10 +68,14 @@ single_statement:
 | statement EOF { $1 }
 
 statement:
-| LET VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, $4, $6) }
-| LET REC VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, $5, $7) }
-| LET VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, $5, Fun (p.Lexing.pos_lnum, $3, $5, $7)) }
-| LET REC VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, $6, Fun (p.Lexing.pos_lnum, $4, $6, $8)) }
+| LET VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, Some $4, $6) }
+| LET VALUE_IDENT EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, None, $4) }
+| LET REC VALUE_IDENT COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, Some $5, $7) }
+| LET REC VALUE_IDENT EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, None, $5) }
+| LET VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, Some $5, Fun (p.Lexing.pos_lnum, $3, $7)) }
+| LET VALUE_IDENT params EQ eexpression { let p = $symbolstartpos in Let (p.Lexing.pos_lnum, $2, None, Fun (p.Lexing.pos_lnum, $3, $5)) }
+| LET REC VALUE_IDENT params COLON styp EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, Some $6, Fun (p.Lexing.pos_lnum, $4, $8)) }
+| LET REC VALUE_IDENT params EQ eexpression { let p = $symbolstartpos in LetRec (p.Lexing.pos_lnum, $3, None, Fun (p.Lexing.pos_lnum, $4, $6)) }
 | TYPE VALUE_IDENT EQ typedecls { let p = $symbolstartpos in Type (p.Lexing.pos_lnum, $2, $4) }
 ;
 
@@ -100,26 +104,24 @@ single_expression:
 
 expression:
 | primary_expression { $1 }
-| LET VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetIn (p.Lexing.pos_lnum, $2, $4, $6, $8) }
-| LET REC VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetRecIn (p.Lexing.pos_lnum, $3, $5, $7, $9) }
-| FUN params COLON styp DOUBLE_ARROW expression { let p = $symbolstartpos in Fun (p.Lexing.pos_lnum, $2, $4, $6) }
-| MATCH LPAREN primary_expression COLON styp RPAREN WITH match_branches { let p = $symbolstartpos in Match (p.Lexing.pos_lnum, $3, $5, $8) }
+| LET VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetIn (p.Lexing.pos_lnum, $2, Some $4, $6, $8) }
+| LET VALUE_IDENT EQ expression IN expression { let p = $symbolstartpos in LetIn (p.Lexing.pos_lnum, $2, None, $4, $6) }
+| LET REC VALUE_IDENT COLON styp EQ expression IN expression { let p = $symbolstartpos in LetRecIn (p.Lexing.pos_lnum, $3, Some $5, $7, $9) }
+| LET REC VALUE_IDENT EQ expression IN expression { let p = $symbolstartpos in LetRecIn (p.Lexing.pos_lnum, $3, None, $5, $7) }
+| FUN params ARROW expression { let p = $symbolstartpos in Fun (p.Lexing.pos_lnum, $2, $4) }
+| MATCH primary_expression WITH match_branches { let p = $symbolstartpos in Match (p.Lexing.pos_lnum, $2, $4) }
 ;
 
 primary_expression:
 | simple_expression { $1 }
 | complex_expression { $1 }
-| applicative_expression typed_applicable_expressions { let p = $symbolstartpos in App (p.Lexing.pos_lnum, $1, $2) }
+| applicative_expression applicable_expressions { let p = $symbolstartpos in App (p.Lexing.pos_lnum, $1, $2) }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
-typed_applicable_expression:
-| LPAREN applicable_expression COLON styp RPAREN { ($2, $4) }
-;
-
-typed_applicable_expressions:
-| typed_applicable_expression { [$1] }
-| typed_applicable_expression typed_applicable_expressions { $1 :: $2 }
+applicable_expressions:
+| applicable_expression { [$1] }
+| applicable_expression applicable_expressions { $1 :: $2 }
 
 applicative_expression:
 | VALUE_IDENT { let p = $symbolstartpos in Var (p.Lexing.pos_lnum, $1) }
@@ -129,6 +131,7 @@ applicative_expression:
 applicable_expression:
 | simple_expression { $1 }
 /* Below is not great */
+| LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
 | TYPE_IDENT { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Record ($1, []))) }
 | LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Tuple ($2 :: $4))) }
 | LPAREN eexpression RPAREN { $2 }

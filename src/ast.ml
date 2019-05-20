@@ -36,11 +36,11 @@ type expr =
   | NumOp of loc * numop * expr * expr
   | ListOp of loc * listop * expr * expr
   | Var of loc * string
-  | LetIn of loc * string * typ * expr * expr
-  | LetRecIn of loc * string * typ * expr * expr
-  | Fun of loc * string list * typ * expr
-  | Match of loc * expr * typ * (match_branch * expr) list
-  | App of loc * expr * (expr * typ) list
+  | LetIn of loc * string * typ option * expr * expr
+  | LetRecIn of loc * string * typ option * expr * expr
+  | Fun of loc * string list * expr
+  | Match of loc * expr * (match_branch * expr) list
+  | App of loc * expr * expr list
   | Seq of loc * expr * expr
 
 and literal =
@@ -70,8 +70,8 @@ and match_branch =
 [@@deriving show]
 
 type stmt =
-  | Let of loc * string * typ * expr
-  | LetRec of loc * string * typ * expr
+  | Let of loc * string * typ option * expr
+  | LetRec of loc * string * typ option * expr
   | Type of loc * string * (string * typ list option) list
 [@@deriving show]
 

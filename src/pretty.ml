@@ -22,8 +22,8 @@ let rec expr_line_no (e: expr): int =
   | Var (l', _) -> l'
   | LetIn (l', _, _, _, _) -> l'
   | LetRecIn (l', _, _, _, _) -> l'
-  | Fun (l', _, _, _) -> l'
-  | Match (l', _, _, _) -> l'
+  | Fun (l', _, _) -> l'
+  | Match (l', _, _) -> l'
   | App (l', _, _) -> l'
   | Seq (l', _, _) -> l'
 
@@ -196,42 +196,45 @@ and pretty_expr (line_no: int) (indent_lvl: int) (e: expr): int * string =
   )
   | Var (_, name) -> (line_no, name)
   | LetIn (_, name, typ, e1', e2') -> (
-    let styp = pretty_typ typ in
+    let styp = match typ with
+    | Some typ -> sprintf ": %s" (pretty_typ typ)
+    | None -> ""
+    in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e1' in
     let (line_no, rest) = pretty_expr line_no (indent_lvl + 1) e2' in
-    (line_no, sprintf "%slet %s: %s = %s in\n%s" pre name styp body rest)
+    (line_no, sprintf "%slet %s%s = %s in\n%s" pre name styp body rest)
   )
   | LetRecIn (_, name, typ, e1', e2') -> (
-    let styp = pretty_typ typ in
+    let styp = match typ with
+    | Some typ -> sprintf ": %s" (pretty_typ typ)
+    | None -> ""
+    in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e1' in
     let (line_no, rest) = pretty_expr line_no (indent_lvl + 1) e2' in
-    (line_no, sprintf "%slet rec %s: %s = %s in\n%s" pre name styp body rest)
+    (line_no, sprintf "%slet rec %s%s = %s in\n%s" pre name styp body rest)
   )
-  | Fun (_, params, typ, e') -> (
+  | Fun (_, params, e') -> (
     let sparams = String.concat params ~sep:" " in
-    let (line_no, styp) = (line_no, pretty_typ typ) in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e' in
-    (line_no, sprintf "%sfun %s: %s ->> %s" pre sparams styp body)
+    (line_no, sprintf "%sfun %s ->> %s" pre sparams body)
   )
-  | Match (_, e', typ, mbs) -> (
+  | Match (_, e', mbs) -> (
     let (line_no, se') = pretty_expr line_no (indent_lvl + 1) e' in
-    let styp = pretty_typ typ in
     let (line_no, smbs) = List.fold mbs ~f:(fun (line_no, acc) (mb, e'') -> (
       let (line_no, smb) = pretty_branch mb line_no in
       let (line_no, se'') = pretty_expr line_no (indent_lvl + 1) e'' in
       (line_no, acc ^ (sprintf "%s| %s -> %s" pre smb se''))
     )) ~init:(line_no, "") in
-    (line_no, sprintf "%smatch (%s: %s) with%s" pre se' styp smbs)
+    (line_no, sprintf "%smatch %s with%s" pre se' smbs)
   )
   | App (_, e1', est') -> (
     let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
     let se1'' = match e1' with
     | L (_, _) -> se1'
     | _ -> sprintf "(%s)" se1' in
-    let (line_no, sest') = List.fold est' ~f:(fun (line_no, acc) (es', t') -> (
-      let (line_no, ses') = pretty_expr line_no (indent_lvl + 1) es' in
-      let st' = pretty_typ t' in
-      (line_no, acc ^ sprintf "(%s: %s) " ses' st')
+    let (line_no, sest') = List.fold est' ~f:(fun (line_no, acc) e -> (
+      let (line_no, ses') = pretty_expr line_no (indent_lvl + 1) e in
+      (line_no, acc ^ ses')
     )) ~init:(0, "") in
     (line_no, sprintf "%s%s %s" pre se1'' sest')
   )
@@ -244,14 +247,20 @@ and pretty_expr (line_no: int) (indent_lvl: int) (e: expr): int * string =
 let rec pretty_stmt (s: stmt) (line_no: int): int * string =
   match s with
   | Let (_, name, typ, body) -> (
-    let styp = pretty_typ typ in
+    let styp = match typ with
+    | Some typ -> sprintf ": %s" (pretty_typ typ)
+    | None -> ""
+    in
     let (line_no, sbody) = pretty_expr line_no 1 body in
-    (line_no, sprintf "let %s: %s = %s" name styp sbody)
+    (line_no, sprintf "let %s%s = %s" name styp sbody)
   )
   | LetRec (_, name, typ, body) -> (
-    let styp = pretty_typ typ in
+    let styp = match typ with
+    | Some typ -> sprintf ": %s" (pretty_typ typ)
+    | None -> ""
+    in
     let (line_no, sbody) = pretty_expr line_no 1 body in
-    (line_no, sprintf "let rec %s: %s = %s" name styp sbody)
+    (line_no, sprintf "let rec %s%s = %s" name styp sbody)
   )
   | Type (_, name, constructors) -> (
     let sconstructors = List.fold constructors ~f:(fun acc (constructor, typs) -> (

@@ -314,16 +314,15 @@ and eval_expr (st: state) (e: expr): value =
     let st' = update st name (Some v) in
     eval_expr st' rest
   )
-  | Fun (l, params, _, body) -> Fun (params, body)
-  | Match (l, e, _, branches) -> (
+  | Fun (l, params, body) -> Fun (params, body)
+  | Match (l, e, branches) -> (
     let v = eval_expr st e in
     eval_match_expr st v branches
   )
-  | App (l, e, ets) -> (
+  | App (l, e, pparams) -> (
     let f = eval_expr st e in
     match f with
     | Fun (params, body) -> (
-      let pparams, _ = List.unzip ets in
       let vs = List.map pparams ~f:(eval_expr st) in
       let v_names = List.zip params vs in
       match v_names with
