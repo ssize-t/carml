@@ -273,3 +273,4 @@ let pretty_expr (e: expr): string = let (_, pexpr) = pretty_expr 0 0 e in pexpr
 let pretty_lit (l: literal): string = let (_, sl) = pretty_lit l 0 in sl
 let pretty_branch (mb: match_branch): string = let (_, smb) = pretty_branch mb 0 in smb
 let pretty_stmt (s: stmt): string = let (_, ss) = pretty_stmt s 0 in ss
+let pretty_program (p: program): string = String.concat (List.map p ~f:pretty_stmt) ~sep:"\n"

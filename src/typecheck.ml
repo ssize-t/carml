@@ -458,7 +458,7 @@ let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * err list)) result =
     Ok gamma''
   )
 
-let typecheck (program: program): err list option =
+let typecheck (program: program): (env, err list) result =
   let maybe_error = List.fold_left program ~f:(fun gamma stmt -> (
     match gamma with
     | Ok gamma -> (
@@ -474,5 +474,5 @@ let typecheck (program: program): err list option =
   )) ~init:(Ok empty_env)
   in
   match maybe_error with
-  | Ok _ -> None
-  | Error (_, e) -> Some e
+  | Ok gamma' -> Ok gamma'
+  | Error (_, e) -> Error e

@@ -174,7 +174,7 @@ and eval_expr (st: state) (e: expr): value =
   match e with
   | L (_, l) -> eval_literal l
   | C (_, c) -> eval_complex st c
-  | UnOp (Loc (l, _), op, e) -> (
+  | UnOp (l, op, e) -> (
     let v = eval_expr st e in
     match v with
     | Bool b -> (
@@ -183,7 +183,7 @@ and eval_expr (st: state) (e: expr): value =
     )
     | v' -> Error (sprintf "Line %d: expected boolean value, found %s" l (show_value v'))
   )
-  | BinOp (Loc (l, _), op, e, e') -> (
+  | BinOp (l, op, e, e') -> (
     let v = eval_expr st e in
     let v' = eval_expr st e' in
     match op with
@@ -228,7 +228,7 @@ and eval_expr (st: state) (e: expr): value =
       | e, _ -> e
       )
   )
-  | NumOp (Loc (l, _), op, e, e') -> (
+  | NumOp (l, op, e, e') -> (
     let v = eval_expr st e in
     let v' = eval_expr st e' in
     let v', v'' = match v, v' with
@@ -264,7 +264,7 @@ and eval_expr (st: state) (e: expr): value =
     )
     | e, _ -> e
   ) 
-  | ListOp (Loc (l, _), op, e, e') -> (
+  | ListOp (l, op, e, e') -> (
     let v = eval_expr st e in
     let v' = eval_expr st e' in
     let v', v'' = match v, v' with
@@ -298,28 +298,28 @@ and eval_expr (st: state) (e: expr): value =
       | Concat -> concat_lists l l'
     )
   )
-  | Var (Loc (l, _), name) -> (
+  | Var (l, name) -> (
     match st name with
     | None -> Error (sprintf "Line %d: name %s not found" l name)
     | Some v -> v
   )
-  | LetIn (Loc (l, _), name, _, e, rest) -> (
+  | LetIn (l, name, _, e, rest) -> (
     let v = eval_expr st e in
     let st' = update st name (Some v) in
     eval_expr st' rest
   )
-  | LetRecIn (Loc (l, _), name, _, e, rest) -> (
+  | LetRecIn (l, name, _, e, rest) -> (
     let st' = update st name (Some Rec) in
     let v = eval_expr st' e in
     let st' = update st name (Some v) in
     eval_expr st' rest
   )
-  | Fun (Loc (l, _), params, _, body) -> Fun (params, body)
-  | Match (Loc (l, _), e, _, branches) -> (
+  | Fun (l, params, _, body) -> Fun (params, body)
+  | Match (l, e, _, branches) -> (
     let v = eval_expr st e in
     eval_match_expr st v branches
   )
-  | App (Loc (l, _), e, ets) -> (
+  | App (l, e, ets) -> (
     let f = eval_expr st e in
     match f with
     | Fun (params, body) -> (
@@ -335,7 +335,7 @@ and eval_expr (st: state) (e: expr): value =
     )
     | _ -> Error (sprintf "Line %d: the left hand side expression of an application is not a function" l)
   ) 
-  | Seq (Loc (l, _), e, e') -> (
+  | Seq (l, e, e') -> (
     eval_expr st e;
     eval_expr st e'
   )

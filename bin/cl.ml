@@ -6,8 +6,8 @@ let run f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Carml.Typecheck.typecheck program with
-    | (program, Error errs) -> Error.print_errs errs; None
-    | (program, Ok gamma') -> Some (Carml.Eval.eval_program program, gamma')
+    | Error errs -> Error.print_errs errs; None
+    | Ok gamma' -> Some (Carml.Eval.eval_program program, gamma')
   with s -> printf "%s\n" (Exn.to_string s); None
 
 let parse_expr buf =
@@ -34,8 +34,8 @@ let typecheck f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Typecheck.typecheck program with
-    | (program, Error err) -> Error.print_errs err; printf "%s" (Carml.Pretty.pretty_program program);
-    | (program, Ok _) -> printf "Typecheck ok"
+    | Error errs -> Error.print_errs errs
+    | Ok _ -> printf "Typecheck ok"
   with s -> printf "%s\n" (Exn.to_string s)
 
 let pretty f =
@@ -102,7 +102,7 @@ let rec _repl (st: Carml.Eval.state) (gamma: Carml.Typecheck.env) (mode: repl_mo
         | Ok s -> (
           match Carml.Typecheck.typecheck_stmt gamma s with
           | Ok gamma' -> (gamma', Carml.Eval.eval_stmt st s)
-          | Error (_, errs) -> Carml.Error.print_errs (List.map errs ~f:(fun (e, _) -> e)); (gamma, st)
+          | Error (_, errs) -> Carml.Error.print_errs errs; (gamma, st)
         )
         | Error e -> printf "Parse error: %s\n" e; (gamma, st)
       )
@@ -111,7 +111,7 @@ let rec _repl (st: Carml.Eval.state) (gamma: Carml.Typecheck.env) (mode: repl_mo
         | Ok s -> (
           match Carml.Typecheck.typecheck_stmt gamma s with
           | Ok gamma' -> (gamma', Carml.Eval.eval_stmt st s)
-          | Error (_, errs) -> Carml.Error.print_errs (List.map errs ~f:(fun (e, _) -> e)); (gamma, st)
+          | Error (_, errs) -> Carml.Error.print_errs errs; (gamma, st)
         )
         | Error e -> (
           match parse_expr line with
