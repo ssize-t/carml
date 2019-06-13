@@ -131,6 +131,7 @@ applicative_expression:
 applicable_expression:
 | simple_expression { $1 }
 /* Below is not great */
+| LBRACKET RBRACKET { let p = $symbolstartpos in C (p.Lexing.pos_lnum, Nil) }
 | LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
 | TYPE_IDENT { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Record ($1, []))) }
 | LPAREN expression COMMA comma_sep_expr RPAREN { let p = $symbolstartpos in C (p.Lexing.pos_lnum, (Tuple ($2 :: $4))) }

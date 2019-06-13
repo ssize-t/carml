@@ -6,8 +6,7 @@ let parse f =
   let lexbuf = Lexing.from_channel (In_channel.create f) in
   try
     let program = Parser.program Lexer.micro lexbuf in
-    printf "%s\n" (Carml.Ast.show_program program);
-    printf "========================\n";
+    Carml.Infer.test program;
   with s -> printf "%s\n" (Exn.to_string s);
   printf "========================\n"
 

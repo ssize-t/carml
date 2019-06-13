@@ -6,7 +6,7 @@ let run f =
   try
     let program = Parser.program Lexer.micro lexbuf in
     match Carml.Typecheck.typecheck program with
-    | Error errs -> Error.print_errs errs; None
+    | Error errs -> Error.print_errs errs; Some (Carml.Eval.eval_program program, Carml.Typecheck.empty_env) (* TODO remove this *)
     | Ok gamma' -> Some (Carml.Eval.eval_program program, gamma')
   with s -> printf "%s\n" (Exn.to_string s); None
 

@@ -49,7 +49,7 @@ let typ_loc (t: typ): loc =
   | TFun (l, _) -> l
   | TRecord (l, _) -> l
 
-let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
+(* let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
   let rec match_typs (t: typ list) (t': typ list) (gamma: env): (bool, string) result =
     match List.zip t t' with
     | Some tt -> List.fold_left tt ~f:(fun acc (t, t') -> (
@@ -421,10 +421,10 @@ and typecheck_expr (t: typ) (gamma: env) (expr: expr): err list option =
     in
     propagate_error e1 e2
   )
-  | Seq (loc, _, e') -> typecheck_expr t gamma e'
+  | Seq (loc, _, e') -> typecheck_expr t gamma e' *)
 
-let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * err list)) result =
-  match stmt with
+let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * err list)) result = Ok empty_env
+  (* match stmt with
   | Let (loc, name, typ, body) -> (
     let gamma' = update gamma name (TBinding typ) in
     match typecheck_expr typ gamma body with
@@ -456,10 +456,10 @@ let typecheck_stmt (gamma: env) (stmt: stmt): (env, (env * err list)) result =
     )) ~init:gamma in
     let gamma'' = update gamma' parent_name (TType type_constructors) in
     Ok gamma''
-  )
+  ) *)
 
-let typecheck (program: program): (env, err list) result =
-  let maybe_error = List.fold_left program ~f:(fun gamma stmt -> (
+let typecheck (program: program): (env, err list) result = Error []
+  (* let maybe_error = List.fold_left program ~f:(fun gamma stmt -> (
     match gamma with
     | Ok gamma -> (
       match typecheck_stmt gamma stmt with
@@ -475,4 +475,4 @@ let typecheck (program: program): (env, err list) result =
   in
   match maybe_error with
   | Ok gamma' -> Ok gamma'
-  | Error (_, e) -> Error e
+  | Error (_, e) -> Error e *)
