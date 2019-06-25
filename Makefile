@@ -1,7 +1,7 @@
 .PHONY: build
 
 build:
-	dune build @install
+	dune build @install --profile release
 
 format:
 	dune build @fmt --auto-promote

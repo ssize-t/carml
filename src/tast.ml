@@ -15,32 +15,12 @@ type typ' =
   | TSecret of typ'
   | TPublic of typ'
   | TVar of int
-  | TOr of typ' list
-[@@deriving show]
-
-let next = ref 0
-
-let fresh_tvar () = next := !next + 1; !next
-
-type binop = Lt | Lte | Eq | Gt | Gte | Neq | And | Or
-[@@deriving show]
-
-type unop = Not
-[@@deriving show]
-
-type numop = Sub | Add | Mult | Div
-[@@deriving show]
-
-type listop = Concat
+  | TAny
 [@@deriving show]
 
 type expr =
   | L of loc * literal
   | C of loc * complex
-  | UnOp of loc * unop * expr
-  | BinOp of loc * binop * expr * expr
-  | NumOp of loc * numop * expr * expr
-  | ListOp of loc * listop * expr * expr
   | Var of loc * string
   | LetIn of loc * string * typ' * expr * expr
   | LetRecIn of loc * string * typ' * expr * expr

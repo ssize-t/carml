@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "ocaml-debugger",
+      "request": "launch",
+      "program": "${workspaceRoot}/_build/default/bin/cl.bc",
+      "console": "internalConsole",
+      "dotMerlins": ["${workspaceRoot}/.merlin"],
+      "noDebug": false,
+      "stopOnEntry": false,
+      "env": {
+        "OCAMLRUNPARAM": "b"
+      }
+    }
+  ]
+}

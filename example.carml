@@ -1,0 +1,5 @@
+let a = "hello"
+
+let print_string s = ()
+
+let b: unit = print_string a: secret(string))

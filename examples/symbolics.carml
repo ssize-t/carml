@@ -1,0 +1,31 @@
+let (!) b =
+  match b with
+  | true -> false
+  | false -> true
+
+let f = ! true
+let t = ! false
+
+let (&&) a b =
+match a with
+| true -> (
+  match b with
+  | true -> true
+  | _ -> false
+)
+| _ -> false
+
+let f = true && false
+let t = true && true
+
+let (||) a b =
+  match a with
+  | true -> true
+  | false -> b
+
+let f = false || false
+let t = true || false
+
+let flat = ! false && false || true
+
+let a = 1 + 2 * 7 - 6 / 2

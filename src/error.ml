@@ -14,11 +14,11 @@ type err =
 let indent_block (b: string): string =
   "\t" ^ String.concat (String.split b ~on:'\n') ~sep:"\n\t"
 
-let pretty_node (n: node): string =
-  match n with
+let pretty_node (n: node): string = ""
+  (* match n with
   | S s -> pretty_stmt s
   | E e -> pretty_expr e
-  | MB b -> pretty_branch b
+  | MB b -> pretty_branch b *)
 
 let err_line (e: err): int =
   match e with
