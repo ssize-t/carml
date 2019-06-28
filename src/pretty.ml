@@ -1,4 +1,5 @@
-open Ast
+open Tast
+(* open Ast *)
 open Core
 
 let mb_line_no (e: match_branch): int =
@@ -15,24 +16,20 @@ let rec expr_line_no (e: expr): int =
   match e with
   | L (l', _) -> l'
   | C (l', _) -> l'
-  | UnOp (l', _, _) -> l'
-  | BinOp (l', _, _, _) -> l'
-  | NumOp (l', _, _, _) -> l'
-  | ListOp (l', _, _, _) -> l'
   | Var (l', _) -> l'
   | LetIn (l', _, _, _, _) -> l'
   | LetRecIn (l', _, _, _, _) -> l'
-  | Fun (l', _, _) -> l'
-  | Match (l', _, _) -> l'
+  | Fun (l', _, _,  _) -> l'
+  | Match (l', _, _, _) -> l'
   | App (l', _, _) -> l'
   | Seq (l', _, _) -> l'
 
-let is_complex_typ (t: typ): bool =
+let is_complex_typ (t: typ'): bool =
   match t with
-  | TFun (_, _) -> true
-  | TTuple (_, _) -> true
-  | TRecord (_, _) -> true
-  | TList (_, _) -> true
+  | TFun _ -> true
+  | TTuple _ -> true
+  | TRecord _ -> true
+  | TList _ -> true
   | _ -> false
 
 let make_indent (lvl: int): string =
@@ -43,37 +40,15 @@ let make_indent (lvl: int): string =
   in
   repeat "    " lvl ""
 
-let pretty_list_op (op: listop): string =
-  match op with
-  | Concat -> "@"
-
-let pretty_binop (op: binop): string =
-  match op with
-  | Lt -> "<"
-  | Lte -> "<="
-  | Eq -> "="
-  | Gt -> ">"
-  | Gte -> ">="
-  | Neq -> "!="
-  | And -> "&&"
-  | Or -> "||"
-
-let pretty_numop (op: numop): string =
-  match op with
-  | Sub -> "-"
-  | Add -> "+"
-  | Mult -> "*"
-  | Div -> "/"
-
-let rec pretty_typ (t: typ): string =
+let rec pretty_typ (t: typ'): string =
   match t with
-  | TInt _ -> "int"
-  | TFloat _ -> "float"
-  | TBool _ -> "bool"
-  | TChar _ -> "char"
-  | TUnit _ -> "unit"
-  | TString _ -> "string"
-  | TFun (_, typs) -> (
+  | TInt -> "int"
+  | TFloat -> "float"
+  | TBool -> "bool"
+  | TChar -> "char"
+  | TUnit -> "unit"
+  | TString -> "string"
+  | TFun typs -> (
     List.fold typs ~f:(fun acc typ -> (
       match is_complex_typ typ, String.length acc with
       | true, 0 -> sprintf "(%s)" (pretty_typ typ)
@@ -82,7 +57,7 @@ let rec pretty_typ (t: typ): string =
       | false, _ -> sprintf "%s -> %s" acc (pretty_typ typ)
     )) ~init:""
   )
-  | TTuple (_, typs) -> (
+  | TTuple typs -> (
     List.fold typs ~f:(fun acc typ -> (
       match is_complex_typ typ, String.length acc with
       | true, 0 -> sprintf "(%s)" (pretty_typ typ)
@@ -91,10 +66,12 @@ let rec pretty_typ (t: typ): string =
       | false, _ -> sprintf "%s * %s" acc (pretty_typ typ)
     )) ~init:""
   )
-  | TRecord (_, constructor) -> constructor
-  | TList (_, t') -> sprintf "%s list" (pretty_typ t')
-  | TSecret (_, t') -> sprintf "secret(%s)" (pretty_typ t')
-  | TPublic (_, t') -> sprintf "public(%s)" (pretty_typ t')
+  | TRecord constructor -> constructor
+  | TList t' -> sprintf "%s list" (pretty_typ t')
+  | TSecret t' -> sprintf "secret(%s)" (pretty_typ t')
+  | TPublic t' -> sprintf "public(%s)" (pretty_typ t')
+  | TVar id -> sprintf "t%d" id
+  | TAny -> "any"
 
 let pretty_lit (l: literal) (line_no: int): int * string =
   match l with
@@ -168,75 +145,45 @@ and pretty_expr (line_no: int) (indent_lvl: int) (e: expr): int * string =
   match e with
   | L (_, l') -> pretty_lit l' line_no
   | C (_, c') -> pretty_comp c' line_no
-  | UnOp (_, op, e') -> (
-    match op with
-    | Not -> (
-      let (line_no, es) = pretty_expr line_no (indent_lvl + 1) e' in
-      (line_no, sprintf "%s!(%s)" pre es)
-    )
-  )
-  | BinOp (_, op, e1', e2') -> (
-    let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
-    let (line_no, se2') = pretty_expr line_no (indent_lvl + 1) e2' in
-    let sop = pretty_binop op in
-    (line_no, sprintf "%s%s %s %s" pre se1' sop se2')
-  )
-  | NumOp (_, op, e1', e2') -> (
-    let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
-    let (line_no, se2') = pretty_expr line_no (indent_lvl + 1) e2' in
-    let sop = pretty_numop op in
-    (line_no, sprintf "%s%s %s %s" pre se1' sop se2')
-  )
-  | ListOp (_, op, e1', e2') -> (
-    let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
-    let (line_no, se2') = pretty_expr line_no (indent_lvl + 1) e2' in
-    let sop = match op with
-    | Concat -> "@" in
-    (line_no, sprintf "%s%s %s %s" pre se1' sop se2')
-  )
   | Var (_, name) -> (line_no, name)
   | LetIn (_, name, typ, e1', e2') -> (
-    let styp = match typ with
-    | Some typ -> sprintf ": %s" (pretty_typ typ)
-    | None -> ""
-    in
+    let styp = sprintf ": %s" (pretty_typ typ) in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e1' in
     let (line_no, rest) = pretty_expr line_no (indent_lvl + 1) e2' in
     (line_no, sprintf "%slet %s%s = %s in\n%s" pre name styp body rest)
   )
   | LetRecIn (_, name, typ, e1', e2') -> (
-    let styp = match typ with
-    | Some typ -> sprintf ": %s" (pretty_typ typ)
-    | None -> ""
-    in
+    let styp = sprintf ": %s" (pretty_typ typ) in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e1' in
     let (line_no, rest) = pretty_expr line_no (indent_lvl + 1) e2' in
     (line_no, sprintf "%slet rec %s%s = %s in\n%s" pre name styp body rest)
   )
-  | Fun (_, params, e') -> (
+  | Fun (_, params, typ, e') -> (
+    let styp = pretty_typ typ in
     let sparams = String.concat params ~sep:" " in
     let (line_no, body) = pretty_expr line_no (indent_lvl + 1) e' in
-    (line_no, sprintf "%sfun %s ->> %s" pre sparams body)
+    (line_no, sprintf "%sfun: (%s) %s ->> %s" pre styp sparams body)
   )
-  | Match (_, e', mbs) -> (
+  | Match (_, e', typ, mbs) -> (
+    let styp = pretty_typ typ in
     let (line_no, se') = pretty_expr line_no (indent_lvl + 1) e' in
     let (line_no, smbs) = List.fold mbs ~f:(fun (line_no, acc) (mb, e'') -> (
       let (line_no, smb) = pretty_branch mb line_no in
       let (line_no, se'') = pretty_expr line_no (indent_lvl + 1) e'' in
       (line_no, acc ^ (sprintf "%s| %s -> %s" pre smb se''))
     )) ~init:(line_no, "") in
-    (line_no, sprintf "%smatch %s with%s" pre se' smbs)
+    (line_no, sprintf "%smatch (%s: %s) with%s" pre styp se' smbs)
   )
   | App (_, e1', est') -> (
     let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
     let se1'' = match e1' with
     | L (_, _) -> se1'
     | _ -> sprintf "(%s)" se1' in
-    let (line_no, sest') = List.fold est' ~f:(fun (line_no, acc) e -> (
+    let (line_no, sest') = List.fold est' ~f:(fun (line_no, acc) (e, _ ) -> (
       let (line_no, ses') = pretty_expr line_no (indent_lvl + 1) e in
-      (line_no, acc ^ ses')
+      (line_no, acc ^ " " ^ ses')
     )) ~init:(0, "") in
-    (line_no, sprintf "%s%s %s" pre se1'' sest')
+    (line_no, sprintf "%s(%s %s)" pre se1'' sest')
   )
   | Seq (_, e1', e2') -> (
     let (line_no, se1') = pretty_expr line_no (indent_lvl + 1) e1' in
@@ -247,18 +194,12 @@ and pretty_expr (line_no: int) (indent_lvl: int) (e: expr): int * string =
 let rec pretty_stmt (s: stmt) (line_no: int): int * string =
   match s with
   | Let (_, name, typ, body) -> (
-    let styp = match typ with
-    | Some typ -> sprintf ": %s" (pretty_typ typ)
-    | None -> ""
-    in
+    let styp = sprintf ": %s" (pretty_typ typ) in
     let (line_no, sbody) = pretty_expr line_no 1 body in
     (line_no, sprintf "let %s%s = %s" name styp sbody)
   )
   | LetRec (_, name, typ, body) -> (
-    let styp = match typ with
-    | Some typ -> sprintf ": %s" (pretty_typ typ)
-    | None -> ""
-    in
+    let styp = sprintf ": %s" (pretty_typ typ) in
     let (line_no, sbody) = pretty_expr line_no 1 body in
     (line_no, sprintf "let rec %s%s = %s" name styp sbody)
   )
@@ -283,3 +224,20 @@ let pretty_lit (l: literal): string = let (_, sl) = pretty_lit l 0 in sl
 let pretty_branch (mb: match_branch): string = let (_, smb) = pretty_branch mb 0 in smb
 let pretty_stmt (s: stmt): string = let (_, ss) = pretty_stmt s 0 in ss
 let pretty_program (p: program): string = String.concat (List.map p ~f:pretty_stmt) ~sep:"\n"
+
+let rec pretty_typ' (t: typ'): string =
+  match t with
+  | TInt -> "int"
+  | TFloat -> "float"
+  | TBool -> "bool"
+  | TString -> "string"
+  | TChar -> "char"
+  | TUnit -> "unit"
+  | TFun typs -> sprintf "(%s)" (String.concat (List.map typs ~f:pretty_typ') ~sep:" -> ")
+  | TTuple typs -> sprintf "(%s)" (String.concat (List.map typs ~f:pretty_typ') ~sep:", ")
+  | TRecord constructor -> constructor
+  | TList typ -> sprintf "%s list" (pretty_typ' typ)
+  | TSecret typ -> sprintf "secret(%s)" (pretty_typ' typ)
+  | TPublic typ -> sprintf "public(%s)" (pretty_typ' typ)
+  | TVar x -> sprintf "'%c" (char_of_int (x + 96))
+  | TAny -> sprintf "any"

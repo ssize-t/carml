@@ -1,6 +1,7 @@
 {
 
 open Parser
+open Core
 
 let line_num = ref 1
 
@@ -25,9 +26,11 @@ let alpha = lower_alpha | upper_alpha
 let value_ident = lower_alpha (alpha | digit)*
 let type_ident = upper_alpha (alpha | digit)*
 let char = "'" [^ '\\' '\'' '\010' '\013'] "'"
+let symbol = '!' | '$' | '%' | '*' | '+' | '-' | '.' | '/' | ':' | '<' | '>' | '?' | '@' | '^' | '~' | '#' | '&' | '|'
+let symbolic_ident = symbol+
 
-rule micro = parse
-  | '='         { EQ }
+rule lexer = parse
+  | '=' as i         { EQ(Char.to_string i) }
   | "let"       { LET }
   | "in"        { IN }
   | "fun"       { FUN }
@@ -47,8 +50,6 @@ rule micro = parse
   | ','         { COMMA }
 
   | ':'         { COLON }
-  | "::"        { DOUBLE_COLON }
-  | '@'         { AT }
   | ';'         { SEMI }
 
   | "()"        { UNIT }
@@ -76,29 +77,34 @@ rule micro = parse
   | value_ident as i  { VALUE_IDENT(i) }
   | type_ident as i  { TYPE_IDENT(i) }
 
-  | "<="        { LTE }
-  | '<'         { LT }
-  | ">="        { GTE }
-  | '>'         { GT }
-  | "&&"        { AND }
-  | "||"        { OR }
-  | "!="        { NEQ }
-  | '!'         { NOT }
+  | "::" as i        { DOUBLE_COLON(i) }
+  | '@' as i         { AT(Char.to_string i) }
 
-  | '+'         { ADD }
-  | '-'         { SUB }
-  | '*'         { MULT }
-  | '/'         { DIV }
+  | "<=" as i        { LTE(i) }
+  | '<' as i         { LT(Char.to_string i) }
+  | ">=" as i        { GTE(i) }
+  | '>' as i         { GT(Char.to_string i) }
+  | "&&" as i        { AND(i) }
+  | "||" as i        { OR(i) }
+  | "!=" as i        { NEQ(i) }
+  | '!' as i         { NOT(Char.to_string i) }
+
+  | '+' as i         { ADD(Char.to_string i) }
+  | '-' as i         { SUB(Char.to_string i) }
+  | '*' as i         { MULT(Char.to_string i) }
+  | '/' as i         { DIV(Char.to_string i) }
+
+  | symbolic_ident as i { SYMBOLIC_IDENT(i) }
 
   | "(*"        { comment lexbuf }
 
-  | '\n'        { incr line_num; L.new_line lexbuf; micro lexbuf }
-  | blank       { micro lexbuf }
+  | '\n'        { incr line_num; L.new_line lexbuf; lexer lexbuf }
+  | blank       { lexer lexbuf }
   | _           { syntax_error "couldn't identify the token" }
   | eof         { EOF }
 and comment =
   parse
-  | "*)"        { micro lexbuf }
+  | "*)"        { lexer lexbuf }
   | '\n'        { L.new_line lexbuf; comment lexbuf }
   | _           { comment lexbuf }
 and read_string buf =

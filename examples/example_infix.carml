@@ -1,0 +1,15 @@
+
+let (+) a b = a
+
+
+let rec (^) a b =
+  match b with
+  | 0 -> a
+  | _ -> a ^ (b - 1)
+
+let (!) actor message = message_send actor message
+
+let b = 1 + 2
+
+
+let a = (1 - 2) * (2 + 3 / 2)

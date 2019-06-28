@@ -4,6 +4,8 @@ open Ast
 
 (*
   TODO explicit type annotations
+
+  TODO: polymorphism?
 *)
 
 let rec typ_to_typ' (t: typ): typ' =
@@ -22,6 +24,11 @@ let rec typ_to_typ' (t: typ): typ' =
   | TPublic (_, typ) -> TPublic (typ_to_typ' typ)
 
 type constr = typ' * typ'
+[@@deriving show]
+
+let next = ref 0
+
+let fresh_tvar () = next := !next + 1; !next
 
 type constructor =
   | Nullary of string * string (* constructor * parent *)
@@ -59,97 +66,54 @@ let lit_to_tast (l: literal): Tast.literal =
   | Char c -> Tast.Char c
   | Bool b -> Tast.Bool b
 
-let unop_op_to_tast (op: unop): Tast.unop =
-  match op with
-  | Not -> Tast.Not
-
-let binop_op_to_tast (op: binop): Tast.binop =
-  match op with
-  | Lt -> Tast.Lt
-  | Lte -> Tast.Lte
-  | Eq -> Tast.Eq
-  | Gt -> Tast.Gt
-  | Gte -> Tast.Gte
-  | Neq -> Tast.Neq
-  | And -> Tast.And
-  | Or -> Tast.Or
-
-let numop_op_to_tast (op: numop): Tast.numop =
-  match op with
-  | Sub -> Tast.Sub
-  | Add -> Tast.Add
-  | Mult -> Tast.Mult
-  | Div -> Tast.Div
-
-let listop_op_to_tast (op: listop): Tast.listop =
-  match op with
-  | Concat -> Tast.Concat
-
-let rec match_mb_t (gamma: env) (t: typ') (mb: match_branch): Tast.match_branch * env * constr list =
+let rec gather_mb (gamma: env) (mb: match_branch): Tast.match_branch * typ' * env * constr list =
   match mb with
-  | ML (loc, l) -> (Tast.ML (loc, lit_to_tast l), gamma, [(t, lit_to_typ l)])
-  | MVar (loc, name) -> (Tast.MVar (loc, name), update gamma name (TBinding t), [])
-  | Blank loc -> (Tast.Blank loc, gamma, [])
+  | ML (loc, l) -> (Tast.ML (loc, lit_to_tast l), lit_to_typ l, gamma, [])
+  | MVar (loc, name) -> (
+    let t = TVar (fresh_tvar ()) in
+    (Tast.MVar (loc, name), t, update gamma name (TBinding t), [])
+  )
+  | Blank loc -> (Tast.Blank loc, TVar (fresh_tvar ()), gamma, [])
   | MTuple (loc, mbs) -> (
-    match t with
-    | TTuple typs -> (
-      match List.zip typs mbs with
-      | Some typ_mbs -> (
-        let (mbs', gamma', typs', cs') = List.fold typ_mbs ~f:(fun (mbs, gamma', typs, cs) (typ, mb) -> (
-          let (mb', gamma'', cs') = match_mb_t gamma typ mb in
-          (mb' :: mbs, merge gamma' gamma'', typ :: typs, cs' @ cs)
-        )) ~init:(([], gamma, [], [])) in
-        (Tast.MTuple (loc, mbs'), gamma', (t, TTuple typs') :: cs')
-      )
-      | None -> (Tast.MTuple (loc, []), empty_env, []) (* TODO error handling *)
-    )
-    | _ -> (Tast.MTuple (loc, []), empty_env, []) (* TODO error handling *)
+    let (mbs', ts, gamma', cs) = List.fold mbs ~f:(fun (mbs, ts, gamma, cs) mb -> (
+      let mb', t, gamma', cs' = gather_mb gamma mb in
+      (mbs @ [mb'], ts @ [t], gamma', cs' @ cs)
+    )) ~init:([], [], gamma, []) in
+    (Tast.MTuple (loc, mbs'), TTuple ts, gamma', cs)
   )
   | MRecord (loc, constructor, mbs) -> (
+    let (mbs', ts, gamma', cs) = List.fold mbs ~f:(fun (mbs, ts, gamma, cs) mb -> (
+      let mb', t, gamma', cs' = gather_mb gamma mb in
+      (mbs @ [mb'], ts @ [t], gamma', cs' @ cs)
+    )) ~init:([], [], gamma, []) in
     match gamma constructor with
-    | Some (TConstructor c) -> (
-      match c with
-      | Nullary (_, parent) -> (
-        match mbs with
-        | [] -> (Tast.MRecord (loc, constructor, []), gamma, [])
-        | _ -> (Tast.MRecord (loc, constructor, []), empty_env, []) (* TODO error handling *)
-      )
-      | Nary (_, parent, args) -> (
-        match List.zip args mbs with
-        | Some argmbs -> (
-          let (mbs', gamma', css) = List.fold argmbs ~f:(fun (mbs, gamma, cs) (typ, mb) -> (
-            let (mb', gamma', cs') = match_mb_t gamma typ mb in
-            (mb' :: mbs, merge gamma gamma', cs' @ cs)
-          )) ~init:([], gamma, []) in
-          (Tast.MRecord (loc, constructor, mbs'), gamma', css)
-        )
-        | None -> (Tast.MRecord (loc, constructor, []), empty_env, []) (* TODO error handling *)
-      )
+    | Some (TConstructor (Nullary (_, parent))) when List.length mbs = 0 -> (
+      (Tast.MRecord (loc, constructor, mbs'), TRecord parent, gamma', cs)
     )
-    | _ -> (Tast.MRecord (loc, constructor, []), empty_env, []) (* TODO error handling *)
+    | Some (TConstructor (Nullary (_, parent))) -> ( (* TODO error handing -- too many arguments *)
+      (Tast.MRecord (loc, constructor, mbs'), TRecord parent, gamma', cs)
+    )
+    | Some (TConstructor (Nary (_, parent, typs))) -> (
+      match List.zip typs ts with
+      | Some tts -> (Tast.MRecord (loc, constructor, mbs'), TRecord parent, gamma', tts @ cs)
+      | None -> (Tast.MRecord (loc, constructor, []), TInt, empty_env, []) (* TODO error handling *)
+    )
+    | _ -> (Tast.MRecord (loc, constructor, []), TRecord "", empty_env, []) (* TODO error handling *)
   )
-  | MNil loc -> (Tast.MNil loc, gamma, [t, (TList (TVar (fresh_tvar ())))])
+  | MNil loc -> (Tast.MNil loc, TList (TVar (fresh_tvar ())), gamma, [])
   | MCons (loc, mb, mb') -> (
-    match t with
-    | TList typ -> (
-      let (mb1', gamma', cs) = match_mb_t gamma typ mb in
-      let (mb1'', gamma'', cs') = match_mb_t gamma typ mb' in
-      (Tast.MCons (loc, mb1', mb1''), merge gamma'' (merge gamma' gamma), cs @ cs')
-    )
-    | _ -> (Tast.MNil loc, empty_env, []) (* TODO error handling *)
+    let (mb1', t, gamma', cs) = gather_mb gamma mb in
+    let (mb1'', t', gamma'', cs') = gather_mb gamma mb' in
+    let list_typ = TVar (fresh_tvar ()) in
+    (Tast.MCons (loc, mb1', mb1''), TList list_typ, (merge gamma (merge gamma' gamma'')), (t, list_typ) :: (t, list_typ) :: cs @ cs')
   )
-
-and match_mb (gamma: env) (e: expr) (mb: match_branch): Tast.match_branch * Tast.expr * env * constr list =
-  let (e', t, cs) = gather_expr gamma e in
-  let (mb', gamma', cs') = match_mb_t gamma t mb in
-  (mb', e', gamma', cs' @ cs)
 
 and complex_to_typ (gamma: env) (c: complex): Tast.complex * typ' * constr list =
   match c with
   | Tuple ts -> (
     let (e', ts', cs) = List.fold ts ~f:(fun (es, t, cs) e -> (
       let (e', t', cs') = gather_expr gamma e in
-      (e' :: es, t' :: t, cs' @ cs)
+      (es @ [e'], t @ [t'], cs' @ cs)
     )) ~init:([], [], []) in
     (Tast.Tuple e', TTuple ts', cs)
   )
@@ -167,7 +131,7 @@ and complex_to_typ (gamma: env) (c: complex): Tast.complex * typ' * constr list 
         | Some argparams -> (
           let (es', cs) = List.fold argparams ~f:(fun (es, acc) (typ, e) -> (
             let (e', t, cs') = gather_expr gamma e in
-            (e' :: es, (typ, t) :: cs' @ acc)
+            (es @ [e'], (typ, t) :: cs' @ acc)
           )) ~init:([], []) in
           (Tast.Record (constructor, es'), TRecord parent, cs)
         )
@@ -190,50 +154,6 @@ and gather_expr (gamma: env) (e: expr): Tast.expr * typ' * constr list =
   | C (loc, c) -> (
     let (c', t, cs) = complex_to_typ gamma c in
     (Tast.C (loc, c'), t, cs)
-  )
-  | UnOp (loc, op, e') -> (
-    match op with
-    | Not -> (
-      let (e', t', cs) = gather_expr gamma e' in
-      (Tast.UnOp (loc, unop_op_to_tast op, e'), TBool, (TBool, t') :: cs) (* Optimistic? *)
-    )
-  )
-  | BinOp (loc, op, e1, e2) -> (
-    match op with
-    | op' when (
-      (op' = Lt) ||
-      (op' = Lte) ||
-      (op' = Gt) ||
-      (op' = Gte)
-    ) -> ((* Numerical *)
-      let (e1', e1t, cs1) = gather_expr gamma e1 in
-      let (e2', e2t, cs2) = gather_expr gamma e2 in
-      (Tast.BinOp (loc, binop_op_to_tast op, e1', e2'), Tast.TBool, (TOr [TInt; TFloat], e1t) :: (TOr [TInt; TFloat], e2t) :: (e1t, e2t) :: cs1 @ cs2)
-    )
-    | op' when (
-      (op' = And) ||
-      (op' = Or)
-    ) -> ((* Binary *)
-      let (e1', e1t, cs1) = gather_expr gamma e1 in
-      let (e2', e2t, cs2) = gather_expr gamma e2 in
-      (Tast.BinOp (loc, binop_op_to_tast op, e1', e2'), TBool, (Tast.TBool, e1t) :: (TBool, e2t) :: cs1 @ cs2)
-    )
-    | op' -> ((* Any matching *)
-      let (e1', e1t, cs1) = gather_expr gamma e1 in
-      let (e2', e2t, cs2) = gather_expr gamma e2 in
-      (Tast.BinOp (loc, binop_op_to_tast op, e1', e2'), TBool, (e1t, e2t) :: cs1 @ cs2)
-    )
-  ) 
-  | NumOp (loc, op, e1, e2) -> (
-    let (e1', e1t, cs1) = gather_expr gamma e1 in
-    let (e2', e2t, cs2) = gather_expr gamma e2 in
-    (Tast.NumOp (loc, numop_op_to_tast op, e1', e2'), TOr [TInt; TFloat], (TOr [TInt; TFloat], e1t) :: (TOr [TInt; TFloat], e2t) :: (e1t, e2t) :: cs1 @ cs2)
-  )
-  | ListOp (loc, op, e1, e2) -> (
-    let list_typ = Tast.TList (TVar (fresh_tvar ())) in
-    let (e1', e1t, cs1) = gather_expr gamma e1 in
-    let (e2', e2t, cs2) = gather_expr gamma e2 in
-    (Tast.ListOp (loc, listop_op_to_tast op, e1', e2'), list_typ, (list_typ, e1t) :: (list_typ, e2t) :: cs1 @ cs2)
   )
   | Var (loc, name) -> (
     match gamma name with
@@ -258,30 +178,32 @@ and gather_expr (gamma: env) (e: expr): Tast.expr * typ' * constr list =
   | Fun (loc, params, body) -> (
     let (typs, gamma') = List.fold params ~f:(fun (typs, gamma) name -> (
       let t = TVar (fresh_tvar ()) in
-      (t :: typs, update gamma name (TBinding t))
+      (typs @ [t], update gamma name (TBinding t))
     )) ~init:(([], gamma)) in
     let (e', t', cs) = gather_expr gamma' body in
-    (Tast.Fun (loc, params, t', e'), TFun (typs @ [t']), cs)
+    (Tast.Fun (loc, params, TFun (typs @ [t']), e'), TFun (typs @ [t']), cs)
   )
   | Match (loc, e, branches) -> (
-    let t = TVar (fresh_tvar ()) in
-    let (e', t', cs) = gather_expr gamma e in
+    let result_typ = TVar (fresh_tvar ()) in
+    let (match_expr, match_expr_typ, cs) = gather_expr gamma e in
     let (mbs', cs') = List.fold branches ~f:(fun (mbs, css) (mb, e) -> (
-      let (mb', e', gamma', cs) = match_mb gamma e mb in
-      ((mb', e') :: mbs, (t, t') :: cs @ css)
+      let (mb', t, gamma', cs) = gather_mb gamma mb in
+      let (e', t', cs') = gather_expr gamma e in
+      (mbs @ [(mb', e')], (t, match_expr_typ) :: (result_typ, t') :: cs @ css)
     )) ~init:([], []) in
-    (Tast.Match (loc, e', t', mbs'), t, cs' @ cs)
+    (Tast.Match (loc, match_expr, match_expr_typ, mbs'), result_typ, cs' @ cs)
   )
   | App (loc, e, es) -> (
     (*
-      et' = [A, B]...
-      et = [A, B, C]
-      C
+      e: A -> B -> C -> D
+      es: [A; B]
+
+      t: C -> D
     *)
     let (e', et, cs) = gather_expr gamma e in
     let (es', ets, cs') = List.fold es ~f:(fun (es, ets, cs') e' -> (
-      let (e', et, cs) = gather_expr gamma e' in
-      ((e', et) :: es, et :: ets, cs @ cs')
+    let (e', et, cs) = gather_expr gamma e' in
+      (es @ [(e', et)], ets @ [et], cs @ cs')
     )) ~init:([], [], []) in
     let ret_typ = TVar (fresh_tvar ()) in
     (Tast.App (loc, e', es'), ret_typ, (et, Tast.TFun (ets @ [ret_typ])) :: cs @ cs')
@@ -338,16 +260,6 @@ let update (gamma: env') (tvar: int) (t: typ') =
 let merge (gamma: env') (gamma': env') =
   fun i -> match gamma i with | Some t -> Some t | None -> gamma' i
 
-let mkenv (x: int) (t: typ'): env' =
-  fun i -> if i = x then Some t else None
-
-let merge_maybe (gamma: env' option) (gamma': env' option): env' option =
-  match gamma, gamma' with
-  | Some g, Some g' -> Some (merge g g')
-  | None, Some g' -> Some g'
-  | Some g, None -> Some g
-  | None, None -> None
-
 let rec tvars (t: typ'): int list =
    match t with
   | TFun ts -> List.fold ts ~f:(fun acc t -> (tvars t) @ acc) ~init:[]
@@ -356,7 +268,6 @@ let rec tvars (t: typ'): int list =
   | TSecret t -> tvars t
   | TPublic t -> tvars t
   | TVar x -> [x]
-  | TOr ts -> List.fold ts ~f:(fun acc t -> (tvars t) @ acc) ~init:[]
   | _ -> []
 
 let rec apply_env' (gamma: env') (t: typ'): typ' =
@@ -364,14 +275,13 @@ let rec apply_env' (gamma: env') (t: typ'): typ' =
   | TVar x -> (
     match gamma x with
     | Some t -> t
-    | None -> TVar x
+    | None -> TAny
   )
   | TFun ts -> TFun (List.map ts ~f:(fun t -> apply_env' gamma t))
   | TTuple ts -> TTuple (List.map ts ~f:(fun t -> apply_env' gamma t))
   | TList t -> TList (apply_env' gamma t)
   | TSecret t -> TSecret (apply_env' gamma t)
   | TPublic t -> TPublic (apply_env' gamma t)
-  | TOr ts -> TOr (List.map ts ~f:(fun t -> apply_env' gamma t))
   | t' -> t'
 
 let subst_all (gamma: env') (cs: constr list) =
@@ -381,6 +291,17 @@ let rec unify (gamma: env') (cs: constr list): env' =
   match cs with
   | c :: rest -> (
     match c with
+    | t, t' when t = t' -> unify gamma rest
+    | TVar x, t' when not (List.exists (tvars t') ~f:(fun t -> t = x)) -> (
+      let gamma' = update gamma x t' in
+      let rest' = subst_all gamma' rest in
+      merge gamma' (unify gamma' rest')
+    )
+    | t, TVar x when not (List.exists (tvars t) ~f:(fun t -> t = x)) -> (
+      let gamma' = update gamma x t in
+      let rest' = subst_all gamma' rest in
+      merge gamma' (unify gamma' rest')
+    )
     | TFun ts, TFun ts' -> (
       match List.zip ts ts' with
       | Some tts' -> unify gamma (tts' @ rest)
@@ -391,33 +312,7 @@ let rec unify (gamma: env') (cs: constr list): env' =
       | Some tts' -> unify gamma (tts' @ rest)
       | None -> unify gamma rest (* TODO error handling *)
     )
-    | TVar x, t -> (
-      (* if List.exists (tvars t) ~f:(fun i -> i = x) then merge (update gamma x t) (unify gamma rest) else *)
-      let gamma' = mkenv x t in
-      merge (update gamma x t) (unify gamma (subst_all gamma' rest)) 
-    )
-    | t, TVar x -> (
-      (* if List.exists (tvars t) ~f:(fun i -> i = x) then merge (update gamma x t) (unify gamma rest) else *)
-      let gamma' = mkenv x t in
-      merge (update gamma x t) (unify gamma (subst_all gamma' rest))
-    )
-    | t, t' when t = t' -> unify gamma rest
-    (* 
-      Below is a bit suspicious
-    *)
-    (* | TOr ts, TOr ts' -> (
-      let maybe_gamma' = List.fold (List.cartesian_product ts ts') ~f:(fun gamma' c -> (
-        match gamma' with
-        | Some g -> Some g
-        | None -> (
-          match unify gamma c with
-          | Some gamma -> Some gamma
-          | None -> None
-        )
-      )) ~init:None in
-      gamma
-    ) *)
-    | _, _ -> unify gamma rest (* TODO error handling *)
+    | a, b -> printf "Failed: %s = %s\n" (show_typ' a) (show_typ' b); unify gamma rest (* TODO error handling *)
   )
   | [] -> gamma
 
@@ -427,10 +322,6 @@ let rec subst_expr (gamma: env') (e: Tast.expr): Tast.expr =
   match (e : Tast.expr) with
   | L (loc, l) -> L (loc, l)
   | C (loc, c) -> C  (loc, c)
-  | UnOp (loc, op, e) -> UnOp (loc, op, subst_expr gamma e)
-  | BinOp (loc, op, e, e') -> BinOp (loc, op, subst_expr gamma e, subst_expr gamma e')
-  | NumOp (loc, op, e, e') -> NumOp (loc, op, subst_expr gamma e, subst_expr gamma e')
-  | ListOp (loc, op, e, e') -> ListOp (loc, op, subst_expr gamma e, subst_expr gamma e')
   | Var (loc, name) -> Var (loc, name)
   | LetIn (loc, name, typ, body, rest) -> LetIn (loc, name, apply_env' gamma typ, subst_expr gamma body, subst_expr gamma rest)
   | LetRecIn (loc, name, typ, body, rest) -> LetRecIn (loc, name, apply_env' gamma typ, subst_expr gamma body, subst_expr gamma rest)
@@ -448,8 +339,131 @@ let subst_stmt (gamma: env') (s: Tast.stmt): Tast.stmt =
 let subst_program (gamma: env') (p: Tast.program): Tast.program =
   List.map p ~f:(subst_stmt gamma)
 
-let test (p: program) =
-  let p, cs = gather_program p in
+open Pretty
+
+let infer_expr (gamma: env) (e: Ast.expr): Tast.expr =
+  let e, t, cs = gather_expr gamma e in
   let gamma = unify cs in
-  let p' = subst_program gamma p in
-  printf "%s" (Tast.show_program p')
+  printf "Constraints:\n";
+  List.iter cs ~f:(fun (t, t') -> printf "%s == %s\n" (show_typ' t) (show_typ' t'));
+  printf "Gamma:\n";
+  List.iter (Array.to_list (Array.mapi (Array.create 0 ~len:!next) ~f:(fun i _ -> (i + 1)))) ~f:(fun a -> (
+    match gamma a with
+    | Some t -> printf "%d: %s\n" a (show_typ' t)
+    | None -> printf "%d None\n" a));
+  printf "%s\n" (pretty_expr e);
+  next := 0;
+  subst_expr gamma e
+
+let infer_stmt (gamma: env) (s: Ast.stmt): env * Tast.stmt =
+  let s, gamma', cs = gather_stmt gamma s in
+  let gamma'' = unify cs in
+  printf "Constraints:\n";
+  List.iter cs ~f:(fun (t, t') -> printf "%s == %s\n" (show_typ' t) (show_typ' t'));
+  printf "Gamma:\n";
+  List.iter (Array.to_list (Array.mapi (Array.create 0 ~len:!next) ~f:(fun i _ -> (i + 1)))) ~f:(fun a -> (
+    match gamma'' a with
+    | Some t -> printf "%d: %s\n" a (show_typ' t)
+    | None -> printf "%d None\n" a));
+  printf "%s\n" (pretty_stmt s);
+  next := 0;
+  (gamma', subst_stmt gamma'' s)
+
+let infer_program (p: Ast.program): Tast.program =
+  let p, cs = gather_program p in
+  next := 0;
+  let gamma = unify cs in
+  subst_program gamma p
+
+
+
+let lit_to_typ' (l: Tast.literal): typ' =
+  match l with
+  | Unit -> TUnit
+  | Int _ -> TInt
+  | Float _ -> TFloat
+  | String _ -> TString
+  | Char _ -> TChar
+  | Bool _ -> TBool
+
+let rec complex_to_typ' (gamma: env) (c: Tast.complex): typ' option =
+  match c with
+  | Tuple es -> (
+    let es' = List.fold es ~f:(fun acc e -> (
+      match acc, expr_typ gamma e with
+      | Some t, Some t' -> Some (t @ [t'])
+      | _, _ -> None
+    )) ~init:(Some []) in
+    match es' with
+    | Some ets -> Some (TTuple ets)
+    | None -> None
+  )
+  | Record (name, params) -> (
+    match gamma name with
+    | Some (TConstructor (Nullary (c, p))) when c = name -> Some (TRecord p)
+    | Some (TConstructor (Nary (c, p, typs))) when c = name -> (
+      match List.zip typs params with
+      | Some typ_params -> List.fold typ_params ~f:(fun acc (t, e) -> (
+        match expr_typ gamma e with
+        | Some t' when t = t' -> acc
+        | _ -> None
+      )) ~init:(Some (Tast.TRecord p)) 
+      | None -> None
+    )
+    | _ -> None
+  )
+  | Nil -> Some (Tast.TList Tast.TAny) (* ? *)
+  | Cons (e, e') -> (
+    let t = expr_typ gamma e in
+    let t' = expr_typ gamma e' in
+    match t with
+    | Some t1 -> (
+      match t' with
+      | Some t1' when t1 = t1' -> Some (Tast.TList t1')
+      | _ -> None
+    )
+    | None -> None
+  )
+
+and expr_typ (gamma: env) (e: Tast.expr): typ' option =
+  match e with
+  | L (_, l) -> Some (lit_to_typ' l) 
+  | C (_, c) -> complex_to_typ' gamma c
+  | Var (_, name) -> (
+    match gamma name with
+    | Some (TBinding t) -> Some t
+    | _ -> None
+  )
+  | LetIn (_, _, t, _, _) -> Some t (* Type of binding, not resulting expression *)
+  | LetRecIn (_, _, t, _, _) -> Some t (* Type of binding, not resulting expression *)
+  | Fun (_, _, t, _) -> Some t
+  | Match (_, _, _, mbs) -> ( (* What is the type of a match expression? *)
+    match List.hd mbs with
+    | Some (_, fst_e) -> (
+      let t = expr_typ gamma fst_e in
+      List.fold (List.slice mbs 1 (List.length mbs)) ~f:(fun acc (_, e) -> (
+        let t' = expr_typ gamma e in
+        match t, t' with
+        | Some t, Some t' when t = t' -> Some t
+        | _, _ -> None 
+      )) ~init:t
+    )
+    | None -> None
+  )
+  | App (_, e, e') -> (
+    let t = expr_typ gamma e in
+    let (_, supplied_param_typs) = List.unzip e' in
+    match t with
+    | Some (TFun param_typs) -> (
+      if List.length param_typs < List.length supplied_param_typs then None else
+      match List.zip (List.slice param_typs 0 (List.length supplied_param_typs)) supplied_param_typs with
+      | Some as_t -> (
+        List.fold as_t ~f:(fun acc (a, s) -> (
+          if a = s then acc else None
+        )) ~init:(Some (Tast.TFun (List.slice param_typs (List.length supplied_param_typs) (List.length param_typs))))
+      )
+      | None -> None
+    )
+    | _ -> None
+  )
+  | Seq (_, e, e') -> expr_typ gamma e'

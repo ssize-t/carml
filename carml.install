@@ -1,0 +1,12 @@
+lib: [
+  "_build/install/default/lib/carml/META" {"META"}
+  "_build/install/default/lib/carml/dune-package" {"dune-package"}
+  "_build/install/default/lib/carml/opam" {"opam"}
+]
+bin: [
+  "_build/install/default/bin/cl" {"cl"}
+  "_build/install/default/bin/parse" {"parse"}
+]
+doc: [
+  "_build/install/default/doc/carml/README.md"
+]
