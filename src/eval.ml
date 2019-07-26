@@ -11,7 +11,7 @@ type value =
   | Char of char
   | String of string
   | Unit
-  | Fun of state * typ' list * string list * expr
+  | Fun of state * typ' * string * expr
   | Tuple of value list
   | Record of string * value list
   | Nil
@@ -34,7 +34,6 @@ let dump st =
     | None -> printf "| %s: None\n" name
   ));
   printf "-----------------------------\n"
-
 (* let rec mangle_mfun (params: typ' list): string list =
   match params with
   | TVar _ -> 
@@ -52,7 +51,7 @@ let rec pretty_value (v: value): string =
   | Char c -> (sprintf "%c" c)
   | String s -> (sprintf "\"%s\"" s)
   | Unit -> "()"
-  | Fun (state, typs, params, expr) -> (sprintf "fun %s -> %s" (String.concat params ~sep:" ") (pretty_expr expr))
+  | Fun (state, typ, param, expr) -> (sprintf "fun %s -> %s" param (pretty_expr expr))
   | Tuple vs -> (sprintf "(%s)" (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
   | Record (name, vs) -> (sprintf "%s(%s)" name (String.concat (List.map vs ~f:pretty_value) ~sep:", "))
   | Nil -> "[]"
@@ -64,6 +63,11 @@ type context =
   | Empty
   | Application of typ' list
 [@@deriving show]
+(*)
+let update_application (omega: context) (t: typ'): context =
+  match omega with
+  | Empty -> Application [t]
+  | Application ts -> Application (t :: ts)
 
 let rec compare (v: value) (v': value) (inv: bool): bool =
   let res = match v, v' with
@@ -220,7 +224,7 @@ and eval_expr (st: state) (omega: context) (e: expr): value =
     let st' = update st name (Some v) in
     eval_expr st' omega rest
   )
-  | Fun (l, params, t, body) -> (
+  | Fun (l, params, t, body) -> (                                                                                                
     match t with
     | TFun typs -> Fun (st, typs, params, body)
     | _ -> Error (sprintf "Line %d: function type mismatch" l)
@@ -229,7 +233,19 @@ and eval_expr (st: state) (omega: context) (e: expr): value =
     let v = eval_expr st omega e in
     eval_match_expr st omega v branches
   )
-  | App (l, e, pparams) -> (
+  | App (l, e, (e', t)) -> (
+    let omega' = update_application omega t in
+
+    let e1' = eval_expr st omega' e in
+
+    match e1' with
+    | Fun (st', t1', param, body) -> (
+      let e2' = eval_expr st omega e' in
+      let st' = update st param (Some e2') in
+      eval_expr st' omega body 
+    )
+    | _ -> Error (sprintf "Line %d: cannot apply a non-function %s" l (pretty_value e1'))
+(* 
     let (pparams, typs) = List.unzip pparams in
 
     let find_fun (typs: typ' list): (state * string list * expr) option =
@@ -262,21 +278,21 @@ and eval_expr (st: state) (omega: context) (e: expr): value =
     match try_subtyps typs with
     | Some ((st, p, e), subtyps) when List.length subtyps = List.length typs -> printf "Found perfect match!\n"; apply_fun st p e
     | Some (_, subtyps) -> (
-      printf "Found partial match: %s\n" (String.concat (List.map subtyps ~f:pretty_typ'));
+      printf "Found partial match: %s\n" (String.concat (List.map subtyps ~f:pretty_typ));
       let rec try_grow_subtyps (typs: typ' list) (supplied_typs: typ' list) =
         match List.nth supplied_typs (List.length typs) with
         | Some next_supplied_typ -> (
           let next_supplied_typs = typs @ [next_supplied_typ] in
-          printf "%s; %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ')) (String.concat (List.map supplied_typs ~f:pretty_typ'));
+          printf "%s; %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ)) (String.concat (List.map supplied_typs ~f:pretty_typ));
           match find_fun next_supplied_typs with
           | Some f when List.length next_supplied_typs = List.length supplied_typs -> Some f
-          | Some f -> printf "Found next match with actual param: %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ')); try_grow_subtyps next_supplied_typs supplied_typs
+          | Some f -> printf "Found next match with actual param: %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ)); try_grow_subtyps next_supplied_typs supplied_typs
           | None -> (
-            let next_any_typs = typs @ [TAny] in
-            printf "%s; %s\n" (String.concat (List.map next_any_typs ~f:pretty_typ')) (String.concat (List.map supplied_typs ~f:pretty_typ'));
+            let next_any_typs = typs @ [TVar 1] in
+            printf "%s; %s\n" (String.concat (List.map next_any_typs ~f:pretty_typ)) (String.concat (List.map supplied_typs ~f:pretty_typ));
             match find_fun next_any_typs with
             | Some f when List.length next_supplied_typs = List.length supplied_typs -> Some f
-            | Some f -> printf "Found next match with TAny: %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ')); try_grow_subtyps next_any_typs supplied_typs
+            | Some f -> printf "Found next match with TAny: %s\n" (String.concat (List.map next_supplied_typs ~f:pretty_typ)); try_grow_subtyps next_any_typs supplied_typs
             | None -> None
           )
         )
@@ -286,7 +302,7 @@ and eval_expr (st: state) (omega: context) (e: expr): value =
       | Some (st, p, e) -> apply_fun st p e
       | None -> Error "Could not find suitable function for supplied parameters"
     )
-    | None -> Error "Could not find suitable function for supplied parameters"
+    | None -> Error "Could not find suitable function for supplied parameters" *)
   ) 
   | Seq (l, e, e') -> (
     eval_expr st omega e;
@@ -398,4 +414,8 @@ let eval_stmt (st: state) (s: stmt): state =
   | _ -> st
 
 let eval_program (p: program): state =
-  List.fold p ~f:(fun st s -> eval_stmt st s) ~init:empty_state
+  List.fold p ~f:(fun st s -> eval_stmt st s) ~init:empty_state *)
+
+let eval_stmt (st: state) (s: stmt): state = empty_state
+let eval_expr (st: state) (omega: context) (e: expr): value = Int 0
+let eval_program (p: program): state = empty_state

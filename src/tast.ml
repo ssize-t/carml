@@ -8,14 +8,13 @@ type typ' =
   | TString
   | TChar
   | TUnit
-  | TFun of typ' list
-  | TTuple of typ' list
+  | TFun of typ' * typ'
+  | TTuple of typ' * typ'
   | TRecord of string
   | TList of typ'
   | TSecret of typ'
   | TPublic of typ'
   | TVar of int
-  | TAny
 [@@deriving show]
 
 type expr =
@@ -24,9 +23,9 @@ type expr =
   | Var of loc * string
   | LetIn of loc * string * typ' * expr * expr
   | LetRecIn of loc * string * typ' * expr * expr
-  | Fun of loc * string list * typ' * expr
+  | Fun of loc * string * typ' * expr
   | Match of loc * expr * typ' * (match_branch * expr) list
-  | App of loc * expr * (expr * typ') list
+  | App of loc * expr * (expr * typ')
   | Seq of loc * expr * expr
 
 and literal =
@@ -39,7 +38,7 @@ and literal =
   | Bool of bool
 
 and complex =
-  | Tuple of expr list
+  | Tuple of expr * expr
   | Record of string * expr list
   | Nil
   | Cons of expr * expr
@@ -49,7 +48,7 @@ and match_branch =
   | MVar of loc * string
   | Blank of loc
   (* Simplify complex types for binding *)
-  | MTuple of loc * match_branch list
+  | MTuple of loc * match_branch * match_branch
   | MRecord of loc * string * match_branch list
   | MNil of loc
   | MCons of loc * match_branch * match_branch

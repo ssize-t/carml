@@ -8,8 +8,8 @@ type typ =
   | TString of loc
   | TChar of loc
   | TUnit of loc
-  | TFun of loc * typ list
-  | TTuple of loc * typ list
+  | TFun of loc * typ * typ
+  | TTuple of loc * typ * typ
   | TRecord of loc * string
   | TList of loc * typ
   | TSecret of loc * typ
@@ -22,13 +22,12 @@ type expr =
   | Var of loc * string
   | LetIn of loc * string * typ option * expr * expr
   | LetRecIn of loc * string * typ option * expr * expr
-  | Fun of loc * string list * expr
+  | Fun of loc * string * expr
   | Match of loc * expr * (match_branch * expr) list
-  | App of loc * expr * expr list
+  | App of loc * expr * expr
   | Seq of loc * expr * expr
 
 and literal =
-  (* Simple literals *)
   | Unit
   | Int of int
   | Float of float
@@ -37,7 +36,7 @@ and literal =
   | Bool of bool
 
 and complex =
-  | Tuple of expr list
+  | Tuple of expr * expr
   | Record of string * expr list
   | Nil
   | Cons of expr * expr
@@ -47,7 +46,7 @@ and match_branch =
   | MVar of loc * string
   | Blank of loc
   (* Simplify complex types for binding *)
-  | MTuple of loc * match_branch list
+  | MTuple of loc * match_branch * match_branch
   | MRecord of loc * string * match_branch list
   | MNil of loc
   | MCons of loc * match_branch * match_branch

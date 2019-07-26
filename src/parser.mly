@@ -1,6 +1,7 @@
 %{
 
 open Ast
+open Core
 
 %}
 
@@ -77,15 +78,38 @@ statement:
 | LET REC VALUE_IDENT COLON styp EQ eexpression { LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $5, $7) }
 | LET REC VALUE_IDENT EQ eexpression { LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, $5) }
 
-| LET VALUE_IDENT params COLON styp EQ eexpression { Let ($symbolstartpos.Lexing.pos_lnum, $2, Some $5, Fun ($symbolstartpos.Lexing.pos_lnum, $3, $7)) }
-| LET VALUE_IDENT params EQ eexpression { Let ($symbolstartpos.Lexing.pos_lnum, $2, None, Fun ($symbolstartpos.Lexing.pos_lnum, $3, $5)) }
-| LET LPAREN SYMBOLIC_IDENT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN SYMBOLIC_IDENT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-
-| LET REC VALUE_IDENT params COLON styp EQ eexpression { LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $6, Fun ($symbolstartpos.Lexing.pos_lnum, $4, $8)) }
-| LET REC VALUE_IDENT params EQ eexpression { LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $4, $6)) }
-| LET REC LPAREN SYMBOLIC_IDENT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN SYMBOLIC_IDENT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
+| LET VALUE_IDENT params COLON styp EQ eexpression {
+  let f = List.rev $3 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  Let ($symbolstartpos.Lexing.pos_lnum, $2, Some $5, f)
+}
+| LET VALUE_IDENT params EQ eexpression {
+  let f = List.rev $3 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$5 in
+  Let ($symbolstartpos.Lexing.pos_lnum, $2, None, f)
+}
+| LET LPAREN SYMBOLIC_IDENT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  Let ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN SYMBOLIC_IDENT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET REC VALUE_IDENT params COLON styp EQ eexpression {
+  let f = List.rev $4 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $6, f)
+}
+| LET REC VALUE_IDENT params EQ eexpression {
+  let f = List.rev $4 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$6 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET REC LPAREN SYMBOLIC_IDENT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN SYMBOLIC_IDENT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
 
 | overridden_default_symbolic_statement { $1}
 
@@ -93,65 +117,230 @@ statement:
 ;
 
 overridden_default_symbolic_statement:
-| LET LPAREN AT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN AND RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN OR RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN LT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN LTE RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN GT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN GTE RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN EQ RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN NEQ RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN ADD RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN SUB RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN MULT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN DIV RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-| LET LPAREN NOT RPAREN params EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, None, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $7)) }
-
-| LET LPAREN AT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN AND RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN OR RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN LT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN LTE RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN GT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN GTE RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN EQ RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN NEQ RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN ADD RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN SUB RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN MULT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN DIV RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-| LET LPAREN NOT RPAREN params COLON styp EQ expression { Let ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, Fun ($symbolstartpos.Lexing.pos_lnum, $5, $9)) }
-
-| LET REC LPAREN AT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN AND RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN OR RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN LT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN LTE RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN GT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN GTE RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN EQ RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN NEQ RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN ADD RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN SUB RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN MULT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN DIV RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-| LET REC LPAREN NOT RPAREN params EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $8)) }
-
-| LET REC LPAREN AT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN AND RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN OR RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN LT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN LTE RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN GT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN GTE RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN EQ RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN NEQ RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN ADD RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN SUB RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN MULT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN DIV RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
-| LET REC LPAREN NOT RPAREN params COLON styp EQ expression { LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, Fun ($symbolstartpos.Lexing.pos_lnum, $6, $10)) }
+| LET LPAREN AT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN AND RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN OR RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN LT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN LTE RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN GT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN GTE RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN EQ RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN NEQ RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN ADD RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN SUB RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN MULT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN DIV RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN NOT RPAREN params EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$7 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, None, f)
+}
+| LET LPAREN AT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN AND RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN OR RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN LT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN LTE RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN GT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN GTE RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN EQ RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN NEQ RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN ADD RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN SUB RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN MULT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN DIV RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET LPAREN NOT RPAREN params COLON styp EQ expression {
+  let f = List.rev $5 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$9 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $3, Some $7, f)
+}
+| LET REC LPAREN AT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN AND RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN OR RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN LT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN LTE RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN GT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN GTE RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN EQ RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN NEQ RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN ADD RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN SUB RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN MULT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN DIV RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN NOT RPAREN params EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$8 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, None, f)
+}
+| LET REC LPAREN AT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN AND RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN OR RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN LT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN LTE RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN GT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN GTE RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN EQ RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN NEQ RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN ADD RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN SUB RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN MULT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN DIV RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
+| LET REC LPAREN NOT RPAREN params COLON styp EQ expression {
+  let f = List.rev $6 |> List.fold ~f:(fun e param -> Fun ($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$10 in
+  LetRec ($symbolstartpos.Lexing.pos_lnum, $4, Some $8, f)
+}
 ;
 
 typedecls:
@@ -192,7 +381,7 @@ expression:
 
 | overridden_default_symbolic_expression { $1 }
 
-| FUN params ARROW expression { Fun ($symbolstartpos.Lexing.pos_lnum, $2, $4) }
+| FUN params ARROW expression { List.fold $2 ~f:(fun e param -> Fun($symbolstartpos.Lexing.pos_lnum, param, e)) ~init:$4 }
 
 | MATCH primary_expression WITH match_branches { Match ($symbolstartpos.Lexing.pos_lnum, $2, $4) }
 ;
@@ -263,7 +452,7 @@ primary_expression:
 | simple_expression { $1 }
 | complex_expression { $1 }
 | symbolic_application { $1 }
-| applicative_expression applicable_expressions { App ($symbolstartpos.Lexing.pos_lnum, $1, $2) }
+| applicative_expression applicable_expressions { List.fold $2 ~f:(fun f arg -> App ($symbolstartpos.Lexing.pos_lnum, f, arg)) ~init:$1 }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
@@ -272,8 +461,8 @@ symbolic_application:
 | numop { $1 }
 | unop { $1 }
 | listop { $1 }
-| SYMBOLIC_IDENT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $1), [$2]) }
-| primary_expression SYMBOLIC_IDENT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
+| SYMBOLIC_IDENT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $1), $2) }
+| primary_expression SYMBOLIC_IDENT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
 ;
 
 applicable_expressions:
@@ -291,7 +480,7 @@ applicable_expression:
 | LBRACKET RBRACKET { C ($symbolstartpos.Lexing.pos_lnum, Nil) }
 | LBRACKET semi_sep_primary_expr  RBRACKET { $2 }
 | TYPE_IDENT { C ($symbolstartpos.Lexing.pos_lnum, (Record ($1, []))) }
-| LPAREN expression COMMA comma_sep_expr RPAREN { C ($symbolstartpos.Lexing.pos_lnum, (Tuple ($2 :: $4))) }
+| LPAREN expression COMMA comma_sep_expr RPAREN { List.fold $4 ~f:(fun e' e -> C ($symbolstartpos.Lexing.pos_lnum, Tuple (e, e'))) ~init:$2 }
 | LPAREN eexpression RPAREN { $2 }
 ;
 
@@ -336,12 +525,17 @@ simple_branch:
 ;
 
 compund_branch:
-| LPAREN comma_sep_match_branch RPAREN { MTuple ($symbolstartpos.Lexing.pos_lnum, $2) }
+                                                                                 
+| LPAREN primary_match_branch COMMA mtuple RPAREN { MTuple ($symbolstartpos.Lexing.pos_lnum, $2, $4) }
 | TYPE_IDENT simple_branch { MRecord ($symbolstartpos.Lexing.pos_lnum, $1, [$2]) }
 | TYPE_IDENT LPAREN comma_sep_match_branch RPAREN { MRecord ($symbolstartpos.Lexing.pos_lnum, $1, $3) }
 | LBRACKET RBRACKET { let p =  $symbolstartpos in MNil ($symbolstartpos.Lexing.pos_lnum) }
 | primary_match_branch DOUBLE_COLON primary_match_branch { MCons ($symbolstartpos.Lexing.pos_lnum, $1, $3) }
 ;
+
+mtuple:
+| primary_match_branch { $1 }
+| primary_match_branch COMMA mtuple { MTuple ($symbolstartpos.Lexing.pos_lnum, $1, $3) }
 
 comma_sep_match_branch:
 | primary_match_branch { [$1] }
@@ -349,37 +543,41 @@ comma_sep_match_branch:
 ;
 
 complex_literal:
-| LPAREN expression COMMA comma_sep_expr RPAREN { Tuple ($2 :: $4) }
+| LPAREN expression COMMA tuple RPAREN { Tuple ($2, $4) }
 | TYPE_IDENT { Record ($1, []) }
 | TYPE_IDENT LPAREN comma_sep_expr RPAREN { Record ($1, $3) }
 | LBRACKET RBRACKET { Nil }
 | primary_expression DOUBLE_COLON primary_expression { Cons ($1, $3) }
 ;
 
+tuple:
+| expression { $1 }
+| expression COMMA tuple { C ($symbolstartpos.Lexing.pos_lnum, Tuple ($1, $3)) }
+
 unop:
-| NOT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $1), [$2]) }
+| NOT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $1), $2) }
 ;
 
 listop:
-| primary_expression AT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
+| primary_expression AT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
 ;
 
 binop:
-| primary_expression AND primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression OR primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression LT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression LTE primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression GT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression GTE primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression EQ primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression NEQ primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
+| primary_expression AND primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression OR primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression LT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression LTE primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression GT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression GTE primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression EQ primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression NEQ primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
 ;
 
 numop:
-| primary_expression ADD primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression SUB primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression MULT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
-| primary_expression DIV primary_expression { App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), [$1; $3]) }
+| primary_expression ADD primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression SUB primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression MULT primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
+| primary_expression DIV primary_expression { App ($symbolstartpos.Lexing.pos_lnum, App ($symbolstartpos.Lexing.pos_lnum, Var ($symbolstartpos.Lexing.pos_lnum, $2), $1), $3) }
 ;
 
 comma_sep_expr:
@@ -426,8 +624,8 @@ typ:
 compound_typ:
 | TSECRET LPAREN compound_typ RPAREN { TSecret ($symbolstartpos.Lexing.pos_lnum, $3) }
 | TPUBLIC LPAREN compound_typ RPAREN { TPublic ($symbolstartpos.Lexing.pos_lnum, $3) }
-| ssimple_typ ARROW arrow_separated_ssimple_typs { TFun ($symbolstartpos.Lexing.pos_lnum, $1 :: $3) }
-| ssimple_typ MULT mult_separated_ssimple_typs { TTuple ($symbolstartpos.Lexing.pos_lnum, $1 :: $3) }
+| ssimple_typ ARROW arrow_separated_ssimple_typs { List.fold $3 ~f:(fun t t' -> TFun ($symbolstartpos.Lexing.pos_lnum, t, t')) ~init:$1 }
+| ssimple_typ MULT mult_separated_ssimple_typs { List.fold $3 ~f:(fun t t' -> TTuple ($symbolstartpos.Lexing.pos_lnum, t, t')) ~init:$1 }
 ;
 
 arrow_separated_ssimple_typs:

@@ -45,8 +45,8 @@ let typ_loc (t: typ): loc =
   | TList (l, _) -> l
   | TSecret (l, _) -> l
   | TPublic (l, _) -> l
-  | TTuple (l, _) -> l
-  | TFun (l, _) -> l
+  | TTuple (l, _, _) -> l
+  | TFun (l, _, _) -> l
   | TRecord (l, _) -> l
 
 (* let rec match_typ (t: typ) (t': typ) (gamma: env): (bool, string) result =
